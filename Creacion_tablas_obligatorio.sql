@@ -19,8 +19,7 @@ create table jugador(
     fecha_nacimiento date not null,
     id_facultad int not null,
     tipo varchar(20) check (tipo in ("grado","postgrado","docente","funcionario")) not null,
-    constraint unica_torneo unique (ci_jugador, id_toreno),
-    constraint cedula_posible check ( ci>=10000000 and ci <= 60000000)
+    constraint cedula_posible check ( ci>=10000000 and ci <= 60000000),
     foreign key (id_facultad) references facultad(id_facultad)
 );
 create table torneo(
@@ -54,6 +53,7 @@ create table equipo_jugador_toreno(
     numero_camiseta int not null,
     primary key (id_equipo,ci_jugador,id_toreno),
     constraint chck_num_camiseta check (numero_camiseta<=99 and numero_camiseta>=1),
+    constraint unica_torneo unique (ci_jugador, id_toreno),
     foreign key (id_equipo) references equipo(id_equipo),
     foreign key (ci_jugador) references jugador(ci),
     foreign key (id_toreno) references torneo(id_torneo)
@@ -94,15 +94,13 @@ create table partido(
     nombre_cancha varchar(50) not null,
     id_complejo int not null,
     estado varchar(20) check ( estado in ("programado","jugado","postergado","cancelado")),
-    constraint chk_equipos check (
-        id_equipo_local <> id_equipo_visitante
-)
+    constraint chk_equipos check (id_equipo_local <> id_equipo_visitante),
+    constraint chck_fechas_partido check ( numero_fecha>= 1),
     foreign key (id_torneo) references torneo(id_torneo),
     foreign key (id_equipo_local) references equipo(id_equipo),
     foreign key (id_equipo_visitante) references equipo(id_equipo),
     foreign key (id_turno) references turno(id_turno),
-    foreign key (nombre_cancha,id_complejo) references cancha(nombre_cancha,id_complejo),
-    constraint chck_fechas check ( numero_fecha>= 1)
+    foreign key (nombre_cancha,id_complejo) references cancha(nombre_cancha,id_complejo)
 );
 create table planilla_partido(
     id_partido int not null,
@@ -118,7 +116,7 @@ create table gol(
     ci_jugador int not null,
     minuto int not null,
     autogol bool not null,
-    constraint chck_minutos check ( minuto <= 60 and minuto >= 1 )
+    constraint chck_minutos_gol check ( minuto <= 60 and minuto >= 1 ),
     foreign key (id_partido) references partido(id_partido),
     foreign key (ci_jugador) references jugador(ci)
 );
@@ -128,18 +126,18 @@ create table tarjeta(
     ci_jugador int not null,
     minuto int not null,
     color varchar(10) check ( color in ("amarilla","roja") ),
-    constraint chck_minutos check ( minuto <= 60 and minuto >= 1 )
+    constraint chck_minutos_tarj check ( minuto <= 60 and minuto >= 1 ),
     foreign key (id_partido) references partido(id_partido),
     foreign key (ci_jugador) references jugador(ci)
 );
-create table sancion_jugaddor(
+create table sancion_jugador(
     id_sancion int auto_increment primary key,
     ci_jugador int not null,
     id_torneo int not null,
     motivo varchar(50) check ( motivo in ("roja","acumulación de amarillas","disciplinaria") ),
     numero_fecha_inicio int not null,
     cantidad_fechas int not null,
-    constraint chck_fechas check ( numero_fecha_inicio >= 1 and cantidad_fechas >=1 )
+    constraint chck_fechas_sanc check ( numero_fecha_inicio >= 1 and cantidad_fechas >=1 ),
     foreign key (ci_jugador) references jugador(ci),
     foreign key (id_torneo) references torneo(id_torneo)
 );
@@ -152,7 +150,7 @@ DELIMITER //
 -- Trigger 1: Validaciones al inscribir/modificar jugadores en planteles
 CREATE TRIGGER trg_valida_inscripcion_jugador
 BEFORE INSERT ON equipo_jugador_toreno
-FOR EACH NEW
+FOR EACH ROW
 BEGIN
     DECLARE v_estado_torneo VARCHAR(20);
     DECLARE v_facultad_equipo INT;
@@ -198,7 +196,7 @@ END //
 -- Trigger 2: Validaciones al programar o actualizar un partido
 CREATE TRIGGER trg_valida_partido
 BEFORE INSERT ON partido
-FOR EACH NEW
+FOR EACH ROW
 BEGIN
     DECLARE v_torneo_local INT;
     DECLARE v_torneo_visitante INT;
@@ -284,7 +282,7 @@ BEGIN
 
     -- CASO A: Tarjeta Roja directa
     IF NEW.color = 'roja' THEN
-        INSERT INTO sancion_jugaddor (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas)
+        INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas)
         VALUES (NEW.ci_jugador, v_id_torneo, 'roja', v_num_fecha + 1, 1);
 
     -- CASO B: Tarjeta Amarilla (control de acumulación)
@@ -299,7 +297,7 @@ BEGIN
 
         -- Si llega a 3, 6, 9... se sanciona automáticamente por 1 fecha (la siguiente)
         IF v_cant_amarillas % 3 = 0 THEN
-            INSERT INTO sancion_jugaddor (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas)
+            INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas)
             VALUES (NEW.ci_jugador, v_id_torneo, 'acumulación de amarillas', v_num_fecha + 1, 1);
         END IF;
     END IF;
@@ -322,7 +320,7 @@ BEGIN
 
     -- Verificar si la fecha del partido cae dentro del rango de alguna sanción activa del jugador
     SELECT COUNT(*) INTO v_sanciones_activas
-    FROM sancion_jugaddor
+    FROM sancion_jugador
     WHERE ci_jugador = NEW.ci_jugador
       AND id_torneo = v_id_torneo
       AND v_num_fecha >= numero_fecha_inicio
@@ -439,7 +437,7 @@ INSERT INTO jugador (ci, nombre, apellido, email, fecha_nacimiento, id_facultad,
 -- 4. TORNEO
 -- ==========================================
 INSERT INTO torneo (nombre, anio, semestre, fecha_inicio, fecha_fin, estado) VALUES
-('Torneo Apertura Futsal 2026', 2026, 1, '2026-03-01', '2026-07-01', 'en curso');
+('Torneo Apertura Futsal 2026', 2026, 1, '2026-03-01', '2026-07-01', 'inscripción');
 
 
 -- ==========================================
