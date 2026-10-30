@@ -4,7 +4,7 @@ use Obligatorio_Futbol5;
 
 create table login(
     correo varchar(50) primary key,
-    contraseña varchar(20) not null,
+    contrasena varchar(20) not null,
     rol varchar(20) check (rol in ('administrador', 'planillero')) not null
 );
 create table facultad(
