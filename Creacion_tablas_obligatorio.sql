@@ -46,17 +46,17 @@ create table equipo(
     foreign key (id_facultad) references facultad(id_facultad),
     foreign key (ci_capitan) references jugador(ci)
 );
-create table equipo_jugador_toreno(
+create table equipo_jugador_torneo(
     id_equipo int not null,
     ci_jugador int not null,
-    id_toreno int not null,
+    id_torneo int not null,
     numero_camiseta int not null,
-    primary key (id_equipo,ci_jugador,id_toreno),
+    primary key (id_equipo,ci_jugador,id_torneo),
     constraint chck_num_camiseta check (numero_camiseta<=99 and numero_camiseta>=1),
-    constraint unica_torneo unique (ci_jugador, id_toreno),
+    constraint unica_torneo unique (ci_jugador, id_torneo),
     foreign key (id_equipo) references equipo(id_equipo),
     foreign key (ci_jugador) references jugador(ci),
-    foreign key (id_toreno) references torneo(id_torneo)
+    foreign key (id_torneo) references torneo(id_torneo)
 );
 create table complejo (
     id_complejo int auto_increment primary key,
@@ -149,7 +149,7 @@ DELIMITER //
 
 -- Trigger 1: Validaciones al inscribir/modificar jugadores en planteles
 CREATE TRIGGER trg_valida_inscripcion_jugador
-BEFORE INSERT ON equipo_jugador_toreno
+BEFORE INSERT ON equipo_jugador_torneo
 FOR EACH ROW
 BEGIN
     DECLARE v_estado_torneo VARCHAR(20);
@@ -160,7 +160,7 @@ BEGIN
     DECLARE v_tipo_jugador VARCHAR(20);
 
     -- 1. Validar que el torneo esté en etapa de inscripción
-    SELECT estado INTO v_estado_torneo FROM torneo WHERE id_torneo = NEW.id_toreno;
+    SELECT estado INTO v_estado_torneo FROM torneo WHERE id_torneo = NEW.id_torneo;
     IF v_estado_torneo <> 'inscripción' THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Los planteles solo pueden modificarse mientras el torneo está en inscripción.';
     END IF;
@@ -176,9 +176,9 @@ BEGIN
     -- 3. Validar límite máximo de jugadores de tipo docente o funcionario (máximo 2 por equipo)
     IF v_tipo_jugador IN ('docente', 'funcionario') THEN
         SELECT COUNT(*) INTO v_cant_especiales
-        FROM equipo_jugador_toreno ej
+        FROM equipo_jugador_torneo ej
         JOIN jugador j ON ej.ci_jugador = j.ci
-        WHERE ej.id_equipo = NEW.id_equipo AND ej.id_toreno = NEW.id_toreno AND j.tipo IN ('docente', 'funcionario');
+        WHERE ej.id_equipo = NEW.id_equipo AND ej.id_torneo = NEW.id_torneo AND j.tipo IN ('docente', 'funcionario');
 
         IF v_cant_especiales > 2 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El plantel admite como máximo 2 jugadores de tipo docente o funcionario.';
@@ -186,7 +186,7 @@ BEGIN
     END IF;
 
     -- 4. Validar el límite máximo del plantel (hasta 10 jugadores)
-    SELECT COUNT(*) INTO v_cant_jugadores FROM equipo_jugador_toreno WHERE id_equipo = NEW.id_equipo AND id_toreno = NEW.id_toreno;
+    SELECT COUNT(*) INTO v_cant_jugadores FROM equipo_jugador_torneo WHERE id_equipo = NEW.id_equipo AND id_torneo = NEW.id_torneo;
     IF v_cant_jugadores >= 10 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El plantel no puede tener más de 10 jugadores.';
     END IF;
@@ -214,8 +214,8 @@ BEGIN
     END IF;
 
     -- 2. Validar que tengan al menos 5 jugadores en su plantel
-    SELECT COUNT(*) INTO v_cant_local FROM equipo_jugador_toreno WHERE id_equipo = NEW.id_equipo_local AND id_toreno = NEW.id_torneo;
-    SELECT COUNT(*) INTO v_cant_visitante FROM equipo_jugador_toreno WHERE id_equipo = NEW.id_equipo_visitante AND id_toreno = NEW.id_torneo;
+    SELECT COUNT(*) INTO v_cant_local FROM equipo_jugador_torneo WHERE id_equipo = NEW.id_equipo_local AND id_torneo = NEW.id_torneo;
+    SELECT COUNT(*) INTO v_cant_visitante FROM equipo_jugador_torneo WHERE id_equipo = NEW.id_equipo_visitante AND id_torneo = NEW.id_torneo;
 
     IF v_cant_local < 5 OR v_cant_visitante < 5 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Ambos equipos deben tener al menos 5 jugadores en su plantel.';
@@ -460,27 +460,27 @@ INSERT INTO equipo (nombre, id_torneo, id_facultad, ci_capitan) VALUES
 -- 6. INSCRIPCIÓN DE JUGADORES A EQUIPO Y TORNEO
 -- ==========================================
 -- Ingeniería FC (id_equipo = 1)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (1, 10001001, 1, 10), (1, 10001002, 1, 5), (1, 10001003, 1, 8), (1, 10001004, 1, 9), (1, 10001005, 1, 4), (1, 10001006, 1, 7), (1, 10001007, 1, 1);
 
 -- Algoritmos United (id_equipo = 2)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (2, 10001008, 1, 10), (2, 10001009, 1, 2), (2, 10001010, 1, 3), (2, 10001011, 1, 6), (2, 10001012, 1, 7), (2, 10001013, 1, 9), (2, 10001014, 1, 11);
 
 -- Redes F.C. (id_equipo = 3)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (3, 10001015, 1, 1), (3, 10001016, 1, 4), (3, 10001017, 1, 5), (3, 10001018, 1, 8), (3, 10001019, 1, 10), (3, 10001020, 1, 14), (3, 10001021, 1, 9);
 
 -- Economía Juniors (id_equipo = 4)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (4, 20002001, 1, 10), (4, 20002002, 1, 2), (4, 20002003, 1, 3), (4, 20002004, 1, 4), (4, 20002005, 1, 7), (4, 20002006, 1, 9), (4, 20002007, 1, 12);
 
 -- Finanzas City (id_equipo = 5)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (5, 20002008, 1, 1), (5, 20002009, 1, 5), (5, 20002010, 1, 6), (5, 20002011, 1, 8), (5, 20002012, 1, 10), (5, 20002013, 1, 11), (5, 20002014, 1, 7);
 
 -- Contadores F.C. (id_equipo = 6)
-INSERT INTO equipo_jugador_toreno (id_equipo, ci_jugador, id_toreno, numero_camiseta) VALUES
+INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
 (6, 20002015, 1, 9), (6, 20002016, 1, 2), (6, 20002017, 1, 3), (6, 20002018, 1, 4), (6, 20002019, 1, 10), (6, 20002020, 1, 7), (6, 20002021, 1, 11);
 
 
