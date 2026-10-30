@@ -5,7 +5,7 @@ use Obligatorio_Futbol5;
 create table login(
     correo varchar(50) primary key,
     contraseña varchar(20) not null,
-    rol varchar(20) check (rol in ("administrador", "planillero")) not null
+    rol varchar(20) check (rol in ('administrador', 'planillero')) not null
 );
 create table facultad(
     id_facultad int auto_increment primary key,
@@ -18,7 +18,7 @@ create table jugador(
     email varchar(50) not null,
     fecha_nacimiento date not null,
     id_facultad int not null,
-    tipo varchar(20) check (tipo in ("grado","postgrado","docente","funcionario")) not null,
+    tipo varchar(20) check (tipo in ('grado','postgrado','docente','funcionario')) not null,
     constraint cedula_posible check ( ci>=10000000 and ci <= 60000000),
     foreign key (id_facultad) references facultad(id_facultad)
 );
@@ -29,7 +29,7 @@ create table torneo(
     semestre int not null,
     fecha_inicio date not null,
     fecha_fin date not null,
-    estado varchar(20) check ( estado in ("inscripción","en curso","finalizado") ) not null,
+    estado varchar(20) check ( estado in ('inscripción','en curso','finalizado') ) not null,
     constraint chck_fechas check (
         anio >= 2026
         and year(fecha_inicio)=anio
@@ -67,7 +67,7 @@ create table complejo (
 create table cancha (
     nombre_cancha varchar(50),
     id_complejo int not null,
-    superficie varchar (20) check (superficie in ("sintetico", "parquet")) not null,
+    superficie varchar (20) check (superficie in ('sintetico', 'parquet')) not null,
     techada bool not null,
     primary key (nombre_cancha,id_complejo),
     foreign key (id_complejo) references complejo(id_complejo)
@@ -93,7 +93,7 @@ create table partido(
     id_turno int not null,
     nombre_cancha varchar(50) not null,
     id_complejo int not null,
-    estado varchar(20) check ( estado in ("programado","jugado","postergado","cancelado")),
+    estado varchar(20) check ( estado in ('programado','jugado','postergado','cancelado')),
     constraint chk_equipos check (id_equipo_local <> id_equipo_visitante),
     constraint chck_fechas_partido check ( numero_fecha>= 1),
     foreign key (id_torneo) references torneo(id_torneo),
@@ -108,7 +108,8 @@ create table planilla_partido(
     id_equipo int not null,
     primary key (id_partido,ci_jugador),
     foreign key (id_partido) references partido(id_partido),
-    foreign key (ci_jugador) references jugador(ci)
+    foreign key (ci_jugador) references jugador(ci),
+    foreign key (id_equipo) references equipo(id_equipo)
 );
 create table gol(
     id_gol int auto_increment primary key,
@@ -125,7 +126,7 @@ create table tarjeta(
     id_partido int not null,
     ci_jugador int not null,
     minuto int not null,
-    color varchar(10) check ( color in ("amarilla","roja") ),
+    color varchar(10) check ( color in ('amarilla','roja') ),
     constraint chck_minutos_tarj check ( minuto <= 60 and minuto >= 1 ),
     foreign key (id_partido) references partido(id_partido),
     foreign key (ci_jugador) references jugador(ci)
@@ -134,7 +135,7 @@ create table sancion_jugador(
     id_sancion int auto_increment primary key,
     ci_jugador int not null,
     id_torneo int not null,
-    motivo varchar(50) check ( motivo in ("roja","acumulación de amarillas","disciplinaria") ),
+    motivo varchar(50) check ( motivo in ('roja','acumulación de amarillas','disciplinaria') ),
     numero_fecha_inicio int not null,
     cantidad_fechas int not null,
     constraint chck_fechas_sanc check ( numero_fecha_inicio >= 1 and cantidad_fechas >=1 ),
@@ -334,12 +335,16 @@ BEGIN
 END //
 
 DELIMITER ;
-
+-- ==========================================
+-- privilegios
+-- ==========================================
 -- Usuario para administradores (acceso completo)
 
 CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
 
 GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
+
+
 
 -- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
 
@@ -355,7 +360,82 @@ GRANT INSERT, UPDATE ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localho
 
 GRANT UPDATE (estado) ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
 
+
+
 FLUSH PRIVILEGES;
+
+
+
+-- ==========================================
+-- vistas:
+-- ==========================================
+
+create view goles_partido as select t.id_equipo, t.nombre, t.id_partido, sum(t.goles_favor) as goles_a_favor from (select e.id_equipo, e.nombre, pp.id_partido, count(id_gol) as goles_favor from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=FALSE
+group by e.id_equipo, e.nombre, pp.id_partido
+Union all
+select p.id_equipo_visitante,e2.nombre, cl.id_partido, goles_favor from partido p
+join
+(select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_favor from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=true
+group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_local and cl.id_partido = p.id_partido
+join equipo e2 on p.id_equipo_visitante = e2.id_equipo
+Union all
+select p.id_equipo_local,e2.nombre, cl.id_partido, goles_favor from partido p
+join
+(select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_favor from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=true
+group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_visitante and cl.id_partido = p.id_partido
+join equipo e2 on p.id_equipo_local = e2.id_equipo
+Union all                                                     -- NUEVO: 0 goles para el local de cada partido
+select p.id_equipo_local, e3.nombre, p.id_partido, 0 from partido p
+join equipo e3 on p.id_equipo_local = e3.id_equipo
+where estado = 'jugado'
+Union all                                                     -- NUEVO: 0 goles para el visitante de cada partido
+select p.id_equipo_visitante, e4.nombre, p.id_partido, 0 from partido p
+join equipo e4 on p.id_equipo_visitante = e4.id_equipo
+where estado = 'jugado') as t
+group by t.id_equipo, t.nombre, t.id_partido;
+
+create view goles_partido_en_contra as select t.id_equipo, e3.nombre, t.id_partido, sum(t.goles_en_contra) as goles_en_contra from (select e.id_equipo, e.nombre, pp.id_partido, count(id_gol) as goles_en_contra from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=true
+group by e.id_equipo, e.nombre, pp.id_partido
+Union all
+select p.id_equipo_visitante,e2.nombre, cl.id_partido, goles_en_contra from partido p
+join
+(select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_en_contra from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=false
+group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_local and cl.id_partido = p.id_partido
+join equipo e2 on p.id_equipo_visitante = e2.id_equipo
+Union all
+select p.id_equipo_local,e2.nombre, cl.id_partido, goles_en_contra from partido p
+join
+(select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_en_contra from gol
+join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
+join equipo e on pp.id_equipo = e.id_equipo
+where autogol=false
+group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_visitante and cl.id_partido = p.id_partido
+join equipo e2 on p.id_equipo_visitante = e2.id_equipo
+Union all                                                     -- NUEVO: 0 goles para el local de cada partido
+select p.id_equipo_local, e5.nombre, p.id_partido, 0 from partido p
+join equipo e5 on p.id_equipo_local = e5.id_equipo
+where estado = 'jugado'
+Union all                                                     -- NUEVO: 0 goles para el visitante de cada partido
+select p.id_equipo_visitante, e4.nombre, p.id_partido, 0 from partido p
+join equipo e4 on p.id_equipo_visitante = e4.id_equipo
+where estado = 'jugado') as t
+join equipo e3 on e3.id_equipo = t.id_equipo
+group by t.id_equipo, e3.nombre, t.id_partido;
 
 -- Inserciones de datos base (6 equipos y 3 fehcas)
 -- ==========================================
@@ -364,15 +444,12 @@ FLUSH PRIVILEGES;
 INSERT INTO login (correo, contrasena, rol) VALUES
     ('admin@ucu.edu.uy', 'admin123', 'administrador'), -- admin
     ('planillero1@ucu.edu.uy', 'planillero123', 'planillero'); -- planillero
-
 -- ==========================================
 -- 2. FACULTADES
 -- ==========================================
 INSERT INTO facultad (nombre) VALUES
 ('Facultad de Ingeniería'),
 ('Facultad de Ciencias Económicas');
-
-
 -- ==========================================
 -- 3. JUGADORES (7 por equipo = 42 jugadores, CI de 8 dígitos)
 -- ==========================================
