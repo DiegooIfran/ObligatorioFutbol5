@@ -341,8 +341,6 @@ CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
 
 GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
 
-
-
 -- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
 
 CREATE USER IF NOT EXISTS 'usr_planillero'@'localhost' IDENTIFIED BY 'PlanilleroPass123!';
@@ -357,10 +355,16 @@ GRANT INSERT, UPDATE ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localho
 
 GRANT UPDATE (estado) ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
 
-
-
 FLUSH PRIVILEGES;
+
 -- Inserciones de datos base (6 equipos y 3 fehcas)
+-- ==========================================
+-- 1. USUARIOS
+-- ==========================================
+INSERT INTO login (correo, contrasena, rol) VALUES
+    ('admin@ucu.edu.uy', 'admin123', 'administrador'), -- admin
+    ('planillero1@ucu.edu.uy', 'planillero123', 'planillero'); -- planillero
+
 -- ==========================================
 -- 2. FACULTADES
 -- ==========================================
