@@ -437,6 +437,46 @@ where estado = 'jugado') as t
 join equipo e3 on e3.id_equipo = t.id_equipo
 group by t.id_equipo, e3.nombre, t.id_partido;
 
+
+-- view de tabla de posiciones
+create view tabla_posiciones as select tp.id_equipo, tp.nombre, sum(tp.partidos_jugados) as partidos_jugados,
+                                       sum(tp.partidos_ganados) as partidos_ganados, sum(tp.partidos_empatados) as partidos_empatados,
+                                       sum(tp.partidos_perdidos) as partidos_perdidos,
+                                       sum(tp.goles_a_favor) as goles_a_favor, sum(tp.goles_en_contra) as goles_en_contra,
+                                       sum(tp.diferencia_de_goles) as diferencia_de_goles,
+                                       sum(tp.puntos) as puntos, tp.id_torneo
+from (select e.id_equipo, e.nombre, count(*) as partidos_jugados,
+       count(case when gf.goles_a_favor > gc.goles_en_contra then 1 end) as partidos_ganados,
+       count(case when gf.goles_a_favor = gc.goles_en_contra then 1 end) as partidos_empatados,
+       count(case when gf.goles_a_favor < gc.goles_en_contra then 1 end) as partidos_perdidos,
+       sum(gf.goles_a_favor) as goles_a_favor, sum(gc.goles_en_contra) as goles_en_contra,
+       sum(gf.goles_a_favor) - sum(gc.goles_en_contra) as diferencia_de_goles,
+       count(case when gf.goles_a_favor > gc.goles_en_contra then 1 end)*3+count(case when gf.goles_a_favor = gc.goles_en_contra then 1 end) as puntos,
+       p.id_torneo
+from partido p
+join equipo e on p.id_equipo_local = e.id_equipo
+join goles_partido gf on gf.id_partido = p.id_partido and gf.id_equipo = e.id_equipo
+join goles_partido_en_contra gc on gc.id_partido = p.id_partido and gc.id_equipo = e.id_equipo
+where p.estado = 'jugado'
+group by e.id_equipo, e.nombre, p.id_torneo
+union all
+select e.id_equipo, e.nombre, count(*) as partidos_jugados,
+       count(case when gf.goles_a_favor > gc.goles_en_contra then 1 end) as partidos_ganados,
+       count(case when gf.goles_a_favor = gc.goles_en_contra then 1 end) as partidos_empatados,
+       count(case when gf.goles_a_favor < gc.goles_en_contra then 1 end) as partidos_perdidos,
+       sum(gf.goles_a_favor) as goles_a_favor, sum(gc.goles_en_contra) as goles_en_contra,
+       sum(gf.goles_a_favor) - sum(gc.goles_en_contra) as diferencia_de_goles,
+       count(case when gf.goles_a_favor > gc.goles_en_contra then 1 end)*3+count(case when gf.goles_a_favor = gc.goles_en_contra then 1 end) as puntos,
+       p.id_torneo
+from partido p
+join equipo e on p.id_equipo_visitante = e.id_equipo
+join goles_partido gf on gf.id_partido = p.id_partido and gf.id_equipo = e.id_equipo
+join goles_partido_en_contra gc on gc.id_partido = p.id_partido and gc.id_equipo = e.id_equipo
+where p.estado = 'jugado'
+group by e.id_equipo, e.nombre, p.id_torneo) as tp
+group by tp.id_equipo, tp.nombre, tp.id_torneo
+order by puntos desc, diferencia_de_goles desc, goles_a_favor desc;
+
 -- Inserciones de datos base (6 equipos y 3 fehcas)
 -- ==========================================
 -- 1. USUARIOS
@@ -717,5 +757,4 @@ INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES
 (4, 10001006, 50, 'roja'),
 (5, 20002014, 25, 'amarilla'),
 (7, 20002016, 45, 'roja');
-
 
