@@ -370,13 +370,15 @@ FLUSH PRIVILEGES;
 -- vistas:
 -- ==========================================
 
-create view goles_partido as select t.id_equipo, t.nombre, t.id_partido, sum(t.goles_favor) as goles_a_favor from (select e.id_equipo, e.nombre, pp.id_partido, count(id_gol) as goles_favor from gol
+create view goles_partido as select t.id_equipo, t.nombre, t.id_partido, t.numero_fecha, sum(t.goles_favor) as goles_a_favor from (
+select e.id_equipo, e.nombre, pp.id_partido, p.numero_fecha, count(id_gol) as goles_favor from gol
 join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
 join equipo e on pp.id_equipo = e.id_equipo
+join partido p on p.id_partido = pp.id_partido
 where autogol=FALSE
 group by e.id_equipo, e.nombre, pp.id_partido
 Union all
-select p.id_equipo_visitante,e2.nombre, cl.id_partido, goles_favor from partido p
+select p.id_equipo_visitante,e2.nombre, cl.id_partido, p.numero_fecha, goles_favor from partido p
 join
 (select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_favor from gol
 join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
@@ -385,7 +387,7 @@ where autogol=true
 group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_local and cl.id_partido = p.id_partido
 join equipo e2 on p.id_equipo_visitante = e2.id_equipo
 Union all
-select p.id_equipo_local,e2.nombre, cl.id_partido, goles_favor from partido p
+select p.id_equipo_local,e2.nombre, cl.id_partido, p.numero_fecha, goles_favor from partido p
 join
 (select e.id_equipo as id_equipo, e.nombre, pp.id_partido as id_partido, count(id_gol) as goles_favor from gol
 join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
@@ -394,14 +396,15 @@ where autogol=true
 group by e.id_equipo, e.nombre, pp.id_partido) as cl on cl.id_equipo = p.id_equipo_visitante and cl.id_partido = p.id_partido
 join equipo e2 on p.id_equipo_local = e2.id_equipo
 Union all                                                     -- NUEVO: 0 goles para el local de cada partido
-select p.id_equipo_local, e3.nombre, p.id_partido, 0 from partido p
+select p.id_equipo_local, e3.nombre, p.id_partido, p.numero_fecha, 0 from partido p
 join equipo e3 on p.id_equipo_local = e3.id_equipo
 where estado = 'jugado'
 Union all                                                     -- NUEVO: 0 goles para el visitante de cada partido
-select p.id_equipo_visitante, e4.nombre, p.id_partido, 0 from partido p
+select p.id_equipo_visitante, e4.nombre, p.id_partido, p.numero_fecha, 0 from partido p
 join equipo e4 on p.id_equipo_visitante = e4.id_equipo
 where estado = 'jugado') as t
-group by t.id_equipo, t.nombre, t.id_partido;
+group by t.id_equipo, t.nombre, t.id_partido, t.numero_fecha;
+
 
 create view goles_partido_en_contra as select t.id_equipo, e3.nombre, t.id_partido, sum(t.goles_en_contra) as goles_en_contra from (select e.id_equipo, e.nombre, pp.id_partido, count(id_gol) as goles_en_contra from gol
 join planilla_partido pp on gol.id_partido = pp.id_partido and gol.ci_jugador = pp.ci_jugador
@@ -436,7 +439,6 @@ join equipo e4 on p.id_equipo_visitante = e4.id_equipo
 where estado = 'jugado') as t
 join equipo e3 on e3.id_equipo = t.id_equipo
 group by t.id_equipo, e3.nombre, t.id_partido;
-
 
 -- view de tabla de posiciones
 create view tabla_posiciones as select tp.id_equipo, tp.nombre, sum(tp.partidos_jugados) as partidos_jugados,
@@ -476,6 +478,107 @@ where p.estado = 'jugado'
 group by e.id_equipo, e.nombre, p.id_torneo) as tp
 group by tp.id_equipo, tp.nombre, tp.id_torneo
 order by puntos desc, diferencia_de_goles desc, goles_a_favor desc;
+
+-- view goleadores
+create view tabla_goleadores as
+select j.ci, j.nombre, j.apellido, e.nombre as equipo, count(g.id_gol) as goles, ejt.id_torneo from gol g
+join jugador j on g.ci_jugador = j.ci
+join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador
+join equipo e on ejt.id_equipo = e.id_equipo
+group by j.ci, j.nombre, j.apellido, e.nombre, ejt.id_torneo
+order by goles desc;
+
+-- view tabla fair play
+create view tabla_fair_play as
+select e.id_equipo, e.nombre as equipo, sum(ts.rojas*3+ts.amarillas) as puntos_fair_play, e.id_torneo
+from equipo e
+join (select e2.id_equipo,
+             count(case when t.color = 'amarilla' then 1 end) as amarillas,
+             count(case when t.color = 'roja' then 1 end) as rojas
+      from equipo e2
+      join equipo_jugador_torneo ejt2 on e2.id_equipo = ejt2.id_equipo
+      join tarjeta t on ejt2.ci_jugador = t.ci_jugador
+      group by e2.id_equipo) as ts on e.id_equipo = ts.id_equipo
+group by e.id_equipo, e.nombre, e.id_torneo
+order by puntos_fair_play;
+
+-- view promedio de goles por fecha
+create view promedio_goles_fecha as
+select p.numero_fecha, round(avg(gp.goles_a_favor)*2,2) as promedio_goles, p.id_torneo from partido p
+join goles_partido gp on p.id_partido = gp.id_partido
+group by p.numero_fecha, p.id_torneo;
+
+
+-- view promedio de goles por edicion (torneo)
+create view promedio_goles_edicion as
+select t.id_torneo, t.nombre as torneo, round(avg(pg.promedio_goles),2) as promedio_goles from torneo t
+join promedio_goles_fecha pg on t.id_torneo = pg.id_torneo
+group by t.id_torneo, t.nombre;
+
+-- view canchas y turnos más utilizados (asumiendo que se realiza para ver disponibilidad lo hicimos general de todos los torneos)
+create view canchas_turnos as select td.id_complejo, td.complejo, td.nombre_cancha, td.id_turno, td.hora_inicio, td.hora_fin, sum(td.cantidad_usos) as cantidad_usos
+from(
+select p.id_complejo, c.nombre as complejo, p.nombre_cancha, p.id_turno, t.hora_inicio, t.hora_fin, count(*) as cantidad_usos
+from partido p
+join complejo c on p.id_complejo = c.id_complejo
+join turno t on p.id_turno = t.id_turno
+group by p.id_complejo, c.nombre, p.nombre_cancha, p.id_turno, t.hora_inicio, t.hora_fin
+union
+select c2.id_complejo, c2.nombre, ch.nombre_cancha, t2.id_turno, t2.hora_inicio, t2.hora_fin, 0
+from cancha ch
+join complejo c2 on c2.id_complejo = ch.id_complejo
+cross join turno t2) as td
+group by td.id_complejo, td.complejo, td.nombre_cancha, td.id_turno, td.hora_inicio, td.hora_fin
+order by cantidad_usos desc;
+
+-- view jugadores por facultad y grado (también lo hicimos general en vez de por torneo)
+create view jugadores_facultad as
+select f.id_facultad, f.nombre as facultad,
+       count(*) as cantidad_de_jugadores,
+       count(case when j.tipo = 'grado' then 1 end) as jugadores_grado,
+       count(case when j.tipo = 'postgrado' then 1 end) as jugadores_postgrado,
+       count(case when j.tipo = 'docente' then 1 end) as jugadores_docentes,
+       count(case when j.tipo = 'funcionario' then 1 end) as jugadores_funcionarios,
+       ejt.id_torneo
+from facultad f
+join equipo e on f.id_facultad = e.id_facultad
+join equipo_jugador_torneo ejt on e.id_equipo = ejt.id_equipo
+join jugador j on ejt.ci_jugador = j.ci
+group by f.id_facultad, f.nombre, ejt.id_torneo;
+
+-- view jugadores sin figurar, lo hicimos por torneo, dirá en qué torneo no figuró
+create view sin_figurar as
+select j.ci, j.nombre, j.apellido, ejt.id_torneo from jugador j
+join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador
+left join planilla_partido pp on j.ci = pp.ci_jugador and ejt.id_equipo = pp.id_equipo
+where pp.id_partido is null;
+
+-- sanciones por equipo y por motivo
+create view sanciones_equipo as
+select e.id_equipo, e.nombre as equipo,
+       count(case when sj.motivo is not null then 1 end) as sanciones_totales,
+       count(case when sj.motivo = 'roja' then 1 end) as rojas,
+       count(case when sj.motivo = 'acumulación de amarillas' then 1 end) as acumulación_de_amarillas,
+       count(case when sj.motivo = 'disciplinaria' then 1 end) as disciplinarias,
+       e.id_torneo
+from equipo e
+join equipo_jugador_torneo ejt on e.id_equipo = ejt.id_equipo
+left join sancion_jugador sj on ejt.ci_jugador = sj.ci_jugador
+group by e.id_equipo, e.nombre, e.id_torneo
+order by sanciones_totales desc;
+
+-- view porcentaje jugados vs postergados o cancelados
+create view porcentaje_jugados as
+select t.id_torneo, round(ip.jugados/ip.totales*100,2) as pct_jugados, round(ip.canc_o_post/ip.totales*100,2) as pct_cancelados_o_postergados
+from torneo t
+join (select p.id_torneo,
+             count(case when p.estado = 'jugado' or p.estado = 'postergado' or p.estado = 'cancelado' then 1 end) as totales,
+             count(case when p.estado = 'jugado' then 1 end) as jugados,
+             count(case when p.estado = 'postergado' or p.estado = 'cancelado' then 1 end) as canc_o_post
+      from partido p
+      group by p.id_torneo) as ip on t.id_torneo = ip.id_torneo;
+
+
 
 -- Inserciones de datos base (6 equipos y 3 fehcas)
 -- ==========================================
