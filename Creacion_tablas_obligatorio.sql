@@ -26,7 +26,7 @@ create table torneo(
     id_torneo int auto_increment primary key,
     nombre varchar(50) not null,
     anio int not null,
-    semestre int not null,
+    semestre int not null check ( semestre = 1 or semestre = 2 ),
     fecha_inicio date not null,
     fecha_fin date not null,
     estado varchar(20) check ( estado in ('inscripción','en curso','finalizado') ) not null,
@@ -42,6 +42,7 @@ create table equipo(
     id_torneo int not null,
     id_facultad int not null,
     ci_capitan int not null,
+    constraint uq_equipo_torneo unique (id_equipo, id_torneo), -- necesario para fk en ejt
     foreign key (id_torneo) references torneo(id_torneo),
     foreign key (id_facultad) references facultad(id_facultad),
     foreign key (ci_capitan) references jugador(ci)
@@ -54,9 +55,8 @@ create table equipo_jugador_torneo(
     primary key (id_equipo,ci_jugador,id_torneo),
     constraint chck_num_camiseta check (numero_camiseta<=99 and numero_camiseta>=1),
     constraint unica_torneo unique (ci_jugador, id_torneo),
-    foreign key (id_equipo) references equipo(id_equipo),
-    foreign key (ci_jugador) references jugador(ci),
-    foreign key (id_torneo) references torneo(id_torneo)
+    foreign key (id_equipo, id_torneo) references equipo(id_equipo, id_torneo),
+    foreign key (ci_jugador) references jugador(ci)
 );
 create table complejo (
     id_complejo int auto_increment primary key,
@@ -93,7 +93,7 @@ create table partido(
     id_turno int not null,
     nombre_cancha varchar(50) not null,
     id_complejo int not null,
-    estado varchar(20) check ( estado in ('programado','jugado','postergado','cancelado')),
+    estado varchar(20) check ( estado in ('programado','jugado','postergado','cancelado')) not null ,
     constraint chk_equipos check (id_equipo_local <> id_equipo_visitante),
     constraint chck_fechas_partido check ( numero_fecha>= 1),
     foreign key (id_torneo) references torneo(id_torneo),
@@ -126,7 +126,7 @@ create table tarjeta(
     id_partido int not null,
     ci_jugador int not null,
     minuto int not null,
-    color varchar(10) check ( color in ('amarilla','roja') ),
+    color varchar(10) check ( color in ('amarilla','roja') ) not null,
     constraint chck_minutos_tarj check ( minuto <= 60 and minuto >= 1 ),
     foreign key (id_partido) references partido(id_partido),
     foreign key (ci_jugador) references jugador(ci)
@@ -135,12 +135,11 @@ create table sancion_jugador(
     id_sancion int auto_increment primary key,
     ci_jugador int not null,
     id_torneo int not null,
-    motivo varchar(50) check ( motivo in ('roja','acumulación de amarillas','disciplinaria') ),
+    motivo varchar(50) check ( motivo in ('roja','acumulación de amarillas','disciplinaria') ) not null,
     numero_fecha_inicio int not null,
     cantidad_fechas int not null,
     constraint chck_fechas_sanc check ( numero_fecha_inicio >= 1 and cantidad_fechas >=1 ),
-    foreign key (ci_jugador) references jugador(ci),
-    foreign key (id_torneo) references torneo(id_torneo)
+    foreign key (ci_jugador, id_torneo) references equipo_jugador_torneo(ci_jugador, id_torneo)
 );
 -- ==========================================
 -- TRIGGERS PARA LAS REGLAS DE NEGOCIO
@@ -181,7 +180,7 @@ BEGIN
         JOIN jugador j ON ej.ci_jugador = j.ci
         WHERE ej.id_equipo = NEW.id_equipo AND ej.id_torneo = NEW.id_torneo AND j.tipo IN ('docente', 'funcionario');
 
-        IF v_cant_especiales > 2 THEN
+        IF v_cant_especiales >= 2 THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El plantel admite como máximo 2 jugadores de tipo docente o funcionario.';
         END IF;
     END IF;
@@ -194,7 +193,7 @@ BEGIN
 END //
 
 
--- Trigger 2: Validaciones al programar o actualizar un partido
+-- Trigger 2: Validaciones al programar un partido
 CREATE TRIGGER trg_valida_partido
 BEFORE INSERT ON partido
 FOR EACH ROW
@@ -205,8 +204,10 @@ BEGIN
     DECLARE v_cant_visitante INT;
     DECLARE v_partidos_previos INT;
     DECLARE v_cancha_ocupada INT;
+    declare v_fecha_inicio_t date;
+    declare v_fecha_fin_t date;
 
-    -- 1. Validar que ambos equipos pertenezcan a la misma edición del torneo
+-- 1. Validar que ambos equipos pertenezcan a la misma edición del torneo
     SELECT id_torneo INTO v_torneo_local FROM equipo WHERE id_equipo = NEW.id_equipo_local;
     SELECT id_torneo INTO v_torneo_visitante FROM equipo WHERE id_equipo = NEW.id_equipo_visitante;
 
@@ -214,7 +215,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Ambos equipos deben pertenecer al torneo del partido.';
     END IF;
 
-    -- 2. Validar que tengan al menos 5 jugadores en su plantel
+-- 2. Validar que tengan al menos 5 jugadores en su plantel
     SELECT COUNT(*) INTO v_cant_local FROM equipo_jugador_torneo WHERE id_equipo = NEW.id_equipo_local AND id_torneo = NEW.id_torneo;
     SELECT COUNT(*) INTO v_cant_visitante FROM equipo_jugador_torneo WHERE id_equipo = NEW.id_equipo_visitante AND id_torneo = NEW.id_torneo;
 
@@ -222,12 +223,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Ambos equipos deben tener al menos 5 jugadores en su plantel.';
     END IF;
 
-    -- 3. Un equipo no se enfrente a sí mismo
-    IF NEW.id_equipo_local = NEW.id_equipo_visitante THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Un equipo no puede enfrentarse a sí mismo.';
-    END IF;
 
-    -- 4. Un equipo no se enfrente a un rival con el que ya tenga un partido en esa edición (salvo cancelado)
+-- 3. Un equipo no se enfrente a un rival con el que ya tenga un partido en esa edición (salvo cancelado)
     SELECT COUNT(*) INTO v_partidos_previos
     FROM partido
     WHERE id_torneo = NEW.id_torneo
@@ -239,7 +236,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Los equipos ya tienen un partido programado/jugado/postergado en esta edición.';
     END IF;
 
-    -- 5. Un equipo no juegue más de un partido en la misma fecha del torneo
+-- 4. Un equipo no juegue más de un partido en la misma fecha del torneo
     SELECT COUNT(*) INTO v_partidos_previos
     FROM partido
     WHERE id_torneo = NEW.id_torneo
@@ -252,7 +249,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Uno de los equipos ya tiene un partido asignado en esta misma fecha del torneo.';
     END IF;
 
-    -- 6. Una cancha no tenga más de un partido asignado en el mismo día y turno
+-- 5. Una cancha no tenga más de un partido asignado en el mismo día y turno
     SELECT COUNT(*) INTO v_cancha_ocupada
     FROM partido
     WHERE dia = NEW.dia
@@ -264,7 +261,18 @@ BEGIN
     IF v_cancha_ocupada > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La cancha ya está ocupada en ese día y turno.';
     END IF;
+
+-- 6. fecha del partido entre fecha inicio del torneo y fecha fin
+    select fecha_inicio, fecha_fin into v_fecha_inicio_t, v_fecha_fin_t
+    from torneo
+    where id_torneo = NEW.id_torneo;
+
+    IF NEW.dia > v_fecha_fin_t or NEW.dia < v_fecha_inicio_t THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La fecha del partido debe estar entre las fechas de inicio y fin del torneo.';
+    END IF;
+
 END //
+
 
 -- 3. TRIGGER: Generar sanción automática por tarjeta Roja o Acumulación de Amarillas
 
@@ -306,33 +314,125 @@ END //
 
 -- 4. TRIGGER: Evitar que un jugador suspendido figure en la planilla del partido
 
-CREATE TRIGGER trg_valida_suspension_planilla
+CREATE TRIGGER trg_valida_planilla
 BEFORE INSERT ON planilla_partido
 FOR EACH ROW
 BEGIN
     DECLARE v_id_torneo INT;
     DECLARE v_num_fecha INT;
+    DECLARE v_local INT;
+    DECLARE v_visitante INT;
+    DECLARE v_inscripto INT;
     DECLARE v_sanciones_activas INT;
+    DECLARE v_estado_partido VARCHAR(20);
 
-    -- Obtener el torneo y número de fecha del partido al que se intenta agregar al jugador
-    SELECT id_torneo, numero_fecha INTO v_id_torneo, v_num_fecha
+    SELECT id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, estado
+    INTO v_id_torneo, v_num_fecha, v_local, v_visitante, v_estado_partido
     FROM partido
     WHERE id_partido = NEW.id_partido;
 
-    -- Verificar si la fecha del partido cae dentro del rango de alguna sanción activa del jugador
+    -- verificar que se haya jugado el partido
+    if v_estado_partido <> 'jugado' then
+                SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El partido no se ha jugado.';
+    END IF;
+
+    -- El equipo debe ser uno de los dos que juegan el partido
+    IF NEW.id_equipo NOT IN (v_local, v_visitante) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El equipo no participa en este partido.';
+    END IF;
+
+    -- El jugador debe pertenecer al plantel de ese equipo
+    SELECT COUNT(*) INTO v_inscripto
+    FROM equipo_jugador_torneo
+    WHERE id_equipo = NEW.id_equipo
+      AND ci_jugador = NEW.ci_jugador
+      AND id_torneo = v_id_torneo;
+
+    IF v_inscripto = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El jugador no pertenece al plantel de ese equipo.';
+    END IF;
+
+    -- Suspensión vigente
     SELECT COUNT(*) INTO v_sanciones_activas
     FROM sancion_jugador
     WHERE ci_jugador = NEW.ci_jugador
       AND id_torneo = v_id_torneo
       AND v_num_fecha >= numero_fecha_inicio
-      AND v_num_fecha < (numero_fecha_inicio + cantidad_fechas);
+      AND v_num_fecha < (numero_fecha_inicio + cantidad_fechas); -- es menor y no menor o igual porque fecha inicio representa el primer partido que no puede jugar
 
-    -- Si existe una sanción activa para esta fecha, se bloquea la inserción
     IF v_sanciones_activas > 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Error: El jugador se encuentra suspendido para esta fecha y no puede ser incluido en la planilla.';
     END IF;
 END //
+
+-- 5. Trigger: Evitar un gol de un jugador que no esté en el partido
+CREATE TRIGGER trg_gol_jugador_valido
+BEFORE INSERT ON gol
+FOR EACH ROW
+BEGIN
+    declare v_participacion int;
+    DECLARE v_estado_partido VARCHAR(20);
+
+    SELECT estado
+    INTO v_estado_partido
+    FROM partido
+    WHERE id_partido = NEW.id_partido;
+
+        -- verificar que se haya jugado el partido
+    if v_estado_partido <> 'jugado' then
+                SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El partido no se ha jugado.';
+    END IF;
+
+    -- verificar si el jugador participó del partido al que se le esta asignando el gol
+    select count(*) into v_participacion
+    from planilla_partido pp
+    where id_partido = NEW.id_partido
+      and ci_jugador = NEW.ci_jugador;
+
+
+    IF v_participacion <> 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El jugador no está incluido en la planilla, por lo que no se le puede registrar un gol.';
+    END IF;
+
+end //
+
+-- 6. Trigger: Evitar una tarjeta de un jugador que no esté en el partido
+CREATE TRIGGER trg_tarjeta_jugador_valido
+BEFORE INSERT ON tarjeta
+FOR EACH ROW
+BEGIN
+    declare v_participacion int;
+    DECLARE v_estado_partido VARCHAR(20);
+
+    SELECT estado
+    INTO v_estado_partido
+    FROM partido
+    WHERE id_partido = NEW.id_partido;
+
+        -- verificar que se haya jugado el partido
+    if v_estado_partido <> 'jugado' then
+                SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El partido no se ha jugado.';
+    END IF;
+
+    -- verificar si el jugador participó del partido al que se le esta asignando la tarjeta
+    select count(*) into v_participacion
+    from planilla_partido pp
+    where id_partido = NEW.id_partido
+      and ci_jugador = NEW.ci_jugador;
+
+    IF v_participacion <> 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: El jugador no está incluido en la planilla, por lo que no se le puede registrar una tarjeta.';
+    END IF;
+
+end //
 
 DELIMITER ;
 -- ==========================================
@@ -485,6 +585,7 @@ select j.ci, j.nombre, j.apellido, e.nombre as equipo, count(g.id_gol) as goles,
 join jugador j on g.ci_jugador = j.ci
 join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador
 join equipo e on ejt.id_equipo = e.id_equipo
+where autogol = false
 group by j.ci, j.nombre, j.apellido, e.nombre, ejt.id_torneo
 order by goles desc;
 
@@ -522,6 +623,7 @@ select p.id_complejo, c.nombre as complejo, p.nombre_cancha, p.id_turno, t.hora_
 from partido p
 join complejo c on p.id_complejo = c.id_complejo
 join turno t on p.id_turno = t.id_turno
+where p.estado = 'jugado'
 group by p.id_complejo, c.nombre, p.nombre_cancha, p.id_turno, t.hora_inicio, t.hora_fin
 union
 select c2.id_complejo, c2.nombre, ch.nombre_cancha, t2.id_turno, t2.hora_inicio, t2.hora_fin, 0
@@ -531,7 +633,7 @@ cross join turno t2) as td
 group by td.id_complejo, td.complejo, td.nombre_cancha, td.id_turno, td.hora_inicio, td.hora_fin
 order by cantidad_usos desc;
 
--- view jugadores por facultad y grado (también lo hicimos general en vez de por torneo)
+-- view jugadores por facultad y grado
 create view jugadores_facultad as
 select f.id_facultad, f.nombre as facultad,
        count(*) as cantidad_de_jugadores,
@@ -578,6 +680,66 @@ join (select p.id_torneo,
       from partido p
       group by p.id_torneo) as ip on t.id_torneo = ip.id_torneo;
 
+-- view resultados
+create view resultados as
+select p.id_partido, p.numero_fecha,
+       p.id_equipo_local, e.nombre as equipo_local,
+       p.id_equipo_visitante, e2.nombre as equipo_visitante,
+       gf.goles_a_favor as goles_e_local, gf2.goles_a_favor as goles_e_visitante
+from partido p
+join equipo e on p.id_equipo_local = e.id_equipo
+join equipo e2 on p.id_equipo_visitante = e2.id_equipo
+join goles_partido gf on p.id_partido = gf.id_partido and p.id_equipo_local = gf.id_equipo
+join goles_partido gf2 on p.id_partido = gf2.id_partido and p.id_equipo_visitante = gf2.id_equipo;
+
+-- view tarjetas_jugador
+create view tarjetas_jugador as
+select h.ci, h.nombre, h.apellido,
+       sum(h.sanciones_totales) as sanciones_totales,
+       sum(h.acumulacion_amarillas) as acumulacion_de_amarillas,
+       sum(h.disciplinarias) as sanciones_disciplinarias,
+       sum(h.amarillas) as tarjetas_amarillas,
+       sum(h.rojas) as tarjetas_rojas
+from (
+select j.ci, j.nombre, j.apellido,
+       count(*) as sanciones_totales,
+       count(case when sj.motivo = 'acumulación de amarillas' then 1 end) as acumulacion_amarillas,
+       count(case when sj.motivo = 'disciplinaria' then 1 end) as disciplinarias,
+       0 as amarillas, 0 as rojas
+from jugador j
+join sancion_jugador sj on j.ci = sj.ci_jugador
+group by j.ci, j.nombre, j.apellido, amarillas, rojas
+union all
+select j.ci, j.nombre, j.apellido,
+       0 as sanciones_totales, 0 as acumulacion_amarillas, 0 as disciplinarias,
+       count(case when t.color = 'amarilla' then 1 end),
+       count(case when t.color = 'roja' then 1 end)
+from jugador j
+join tarjeta t on j.ci = t.ci_jugador
+group by j.ci, j.nombre, j.apellido, sanciones_totales, acumulacion_amarillas, disciplinarias) as h
+group by h.ci, h.nombre, h.apellido
+order by sanciones_totales desc;
+
+-- view porcentaje_participación
+create view porcentaje_participacion as
+select j.ci, j.nombre, j.apellido, e.id_equipo, e.nombre as equipo,
+       round(count(pp.id_partido)/ep.equipo_participaciones * 100,2) as porcentaje_participaciones,
+       ejt.id_torneo
+from jugador j
+join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador
+join equipo e on ejt.id_equipo = e.id_equipo
+left join planilla_partido pp on j.ci = pp.ci_jugador and e.id_equipo = pp.id_equipo
+join (select h.id_equipo, count(*) as equipo_participaciones
+      from (select e2.id_equipo, p.id_partido
+            from equipo e2
+            join partido p on e2.id_equipo = p.id_equipo_local
+            union
+            select e3.id_equipo, p2.id_partido
+            from equipo e3
+            join partido p2 on e3.id_equipo = p2.id_equipo_visitante) as h
+      group by h.id_equipo) as ep on e.id_equipo = ep.id_equipo
+group by j.ci, j.nombre, j.apellido, e.id_equipo, e.nombre, ejt.id_torneo
+order by porcentaje_participaciones desc;
 
 
 -- Inserciones de datos base (6 equipos y 3 fehcas)
