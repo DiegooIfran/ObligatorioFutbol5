@@ -612,17 +612,6 @@ BEGIN
     END IF;
 END //
 
-DELIMITER ;
--- ==========================================
--- privilegios
--- ==========================================
--- Usuario para administradores (acceso completo)
-
-CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
-
-GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
-REVOKE DROP ON *.* FROM 'usr_admin'@'localhost';
-
 --Partido con estado jugado solo si su día y turno ya pasaron
 CREATE TRIGGER trg_partido_jugado_ins
 BEFORE INSERT ON partido
@@ -651,6 +640,18 @@ BEGIN
         END IF;
     END IF;
 END //
+
+    
+DELIMITER ;
+-- ==========================================
+-- privilegios
+-- ==========================================
+-- Usuario para administradores (acceso completo)
+
+CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
+
+GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
+REVOKE DROP ON *.* FROM 'usr_admin'@'localhost';
 
 
 -- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
