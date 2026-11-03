@@ -56,6 +56,7 @@ create table equipo_jugador_torneo(
     constraint chck_num_camiseta check (numero_camiseta<=99 and numero_camiseta>=1),
     constraint unica_torneo unique (ci_jugador, id_torneo),
     constraint uq_equipo_jugador unique (id_equipo, ci_jugador), -- necesario para fk en pp
+    constraint uq_camiseta_equipo unique (id_equipo, numero_camiseta), -- un solo jugador por numero de camiseta
     foreign key (id_equipo, id_torneo) references equipo(id_equipo, id_torneo),
     foreign key (ci_jugador) references jugador(ci)
 );
