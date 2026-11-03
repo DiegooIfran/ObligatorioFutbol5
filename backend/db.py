@@ -23,7 +23,7 @@ def get_db_connection(user_role="admin"):
     try:
         connection = mysql.connector.connect(
             host="localhost",
-            database="ObligatorioFutbol5",
+            database="Obligatorio_Futbol5",
             user=creds["user"],
             password=creds["password"]
         )
