@@ -610,6 +610,34 @@ CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
 GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
 REVOKE DROP ON *.* FROM 'usr_admin'@'localhost';
 
+--Partido con estado jugado solo si su día y turno ya pasaron
+CREATE TRIGGER trg_partido_jugado_ins
+BEFORE INSERT ON partido
+FOR EACH ROW
+BEGIN
+    DECLARE v_hora_fin TIME;
+    IF NEW.estado = 'jugado' THEN
+        SELECT hora_fin INTO v_hora_fin FROM turno WHERE id_turno = NEW.id_turno;
+        IF TIMESTAMP(NEW.dia, v_hora_fin) > NOW() THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Un partido solo puede marcarse como jugado después de que terminó su turno.';
+        END IF;
+    END IF;
+END //
+
+CREATE TRIGGER trg_partido_jugado_upd
+BEFORE UPDATE ON partido
+FOR EACH ROW
+BEGIN
+    DECLARE v_hora_fin TIME;
+    IF NEW.estado = 'jugado' THEN
+        SELECT hora_fin INTO v_hora_fin FROM turno WHERE id_turno = NEW.id_turno;
+        IF TIMESTAMP(NEW.dia, v_hora_fin) > NOW() THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Un partido solo puede marcarse como jugado después de que terminó su turno.';
+        END IF;
+    END IF;
+END //
 
 
 -- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
