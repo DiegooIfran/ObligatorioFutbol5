@@ -600,6 +600,18 @@ BEGIN
     END IF;
 END //
 
+--trigger para no borrar un partido jugado
+    
+    CREATE TRIGGER trg_partido_del
+BEFORE DELETE ON partido
+FOR EACH ROW
+BEGIN
+    IF OLD.estado = 'jugado' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: Un partido jugado no puede eliminarse.';
+    END IF;
+END //
+
 DELIMITER ;
 -- ==========================================
 -- privilegios
