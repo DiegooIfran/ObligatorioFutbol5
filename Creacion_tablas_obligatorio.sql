@@ -887,7 +887,8 @@ order by goles desc;
 
 -- view tabla fair play
 create view tabla_fair_play as
-select e.id_equipo, e.nombre as equipo, sum(ts.rojas*3+ts.amarillas) as puntos_fair_play, e.id_torneo
+select h.id_equipo, h.equipo, sum(h.puntos_fair_play) as puntos_fair_play, h.id_torneo
+from (select e.id_equipo, e.nombre as equipo, sum(ts.rojas*3+ts.amarillas) as puntos_fair_play, e.id_torneo
 from equipo e
 join (select e2.id_equipo,
              count(case when t.color = 'amarilla' then 1 end) as amarillas,
@@ -897,6 +898,9 @@ join (select e2.id_equipo,
       join tarjeta t on ejt2.ci_jugador = t.ci_jugador
       group by e2.id_equipo) as ts on e.id_equipo = ts.id_equipo
 group by e.id_equipo, e.nombre, e.id_torneo
+      union
+      select e.id_equipo, e.nombre, 0, e.id_torneo from equipo e) as h
+group by h.id_equipo, h.equipo, h.id_torneo
 order by puntos_fair_play;
 
 -- view promedio de goles por fecha
@@ -1129,6 +1133,7 @@ GRANT SELECT ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.sancion_jugador TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.turno TO 'usr_planillero'@'localhost';
 -- vistas
 GRANT SELECT ON Obligatorio_Futbol5.canchas_turnos TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.goles_partido TO 'usr_planillero'@'localhost';
@@ -1443,7 +1448,7 @@ INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES
 
 
 -- ==========================================
--- triggers 48hs 
+-- triggers 48hs
 -- ==========================================
 DELIMITER //
 
