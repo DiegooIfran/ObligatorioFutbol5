@@ -14,7 +14,7 @@ def autenticar_usuario(correo, contrasena):
     Se utiliza una conexión temporal o de lectura para verificar la cuenta.
     """
     # Conectamos con usuario básico o admin para validar el login
-    conn = get_db_connection("admin")
+    conn = get_db_connection("login")
     if not conn:
         return None
 
