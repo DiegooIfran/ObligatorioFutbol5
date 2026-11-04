@@ -1049,6 +1049,7 @@ GRANT insert, update, delete ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost'
 -- que por razones obvias no queremos que tenga acceso a login
 -- tablas
 GRANT SELECT ON Obligatorio_Futbol5.cancha TO 'usr_admin'@'localhost';
+GRANT SELECT (correo, rol) ON Obligatorio_Futbol5.login TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.complejo TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.equipo TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.equipo_jugador_torneo TO 'usr_admin'@'localhost';
