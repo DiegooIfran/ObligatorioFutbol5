@@ -1438,3 +1438,181 @@ INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES
 (4, 10001006, 50, 'roja'),
 (5, 20002014, 25, 'amarilla'),
 (7, 20002016, 45, 'roja');
+
+
+-- ==========================================
+-- triggers 48hs 
+-- ==========================================
+DELIMITER //
+
+-- Alta de gol: solo dentro de las 48 h posteriores al fin del turno
+CREATE TRIGGER trg_gol_plazo_ins
+BEFORE INSERT ON gol
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = NEW.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para corregir el resultado de este partido.';
+    END IF;
+END //
+
+-- Modificación de gol
+CREATE TRIGGER trg_gol_plazo_upd
+BEFORE UPDATE ON gol
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    IF NEW.id_partido <> OLD.id_partido THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: No se puede mover un gol a otro partido; borralo y cargalo de nuevo.';
+    END IF;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para corregir el resultado de este partido.';
+    END IF;
+END //
+
+-- Baja de gol
+CREATE TRIGGER trg_gol_plazo_del
+BEFORE DELETE ON gol
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para corregir el resultado de este partido.';
+    END IF;
+END //
+
+-- ===== TARJETA =====
+
+CREATE TRIGGER trg_tarjeta_plazo_ins
+BEFORE INSERT ON tarjeta
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = NEW.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar las tarjetas de este partido.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_tarjeta_plazo_upd
+BEFORE UPDATE ON tarjeta
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar las tarjetas de este partido.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_tarjeta_plazo_del
+BEFORE DELETE ON tarjeta
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar las tarjetas de este partido.';
+    END IF;
+END //
+
+-- ===== PLANILLA =====
+
+CREATE TRIGGER trg_planilla_plazo_ins
+BEFORE INSERT ON planilla_partido
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = NEW.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar la planilla de este partido.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_planilla_plazo_upd
+BEFORE UPDATE ON planilla_partido
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    IF NEW.id_partido <> OLD.id_partido THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: No se puede mover un jugador de planilla a otro partido; borralo y cargalo de nuevo.';
+    END IF;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar la planilla de este partido.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_planilla_plazo_del
+BEFORE DELETE ON planilla_partido
+FOR EACH ROW
+BEGIN
+    DECLARE v_fin DATETIME DEFAULT NULL;
+
+    SELECT TIMESTAMP(p.dia, t.hora_fin) INTO v_fin
+    FROM partido p
+    JOIN turno t ON t.id_turno = p.id_turno
+    WHERE p.id_partido = OLD.id_partido;
+
+    IF NOW() > v_fin + INTERVAL 48 HOUR THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Vencio el plazo de 48 horas para modificar la planilla de este partido.';
+    END IF;
+END //
+
+DELIMITER ;
