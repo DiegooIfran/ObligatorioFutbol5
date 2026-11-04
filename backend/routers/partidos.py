@@ -273,3 +273,34 @@ def cancelar_partido(id_partido):
     finally:
         cursor.close()
         conn.close()
+
+
+def eliminar_partido(id_partido):
+    """
+    Elimina físicamente un partido.
+    El trigger trg_partido_del impide eliminar partidos que ya tengan estado 'jugado'.
+    """
+    conn = get_db_connection(user_role="admin")
+    if not conn:
+        return {"error": "No se pudo conectar a la base de datos"}
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT id_partido, estado FROM partido WHERE id_partido = %s", (id_partido,))
+        partido = cursor.fetchone()
+        if not partido:
+            return {"error": "El partido no existe."}
+
+        if partido["estado"] == "jugado":
+            return {"error": "No se puede borrar un partido jugado."}
+
+        cursor.execute("DELETE FROM partido WHERE id_partido = %s", (id_partido,))
+        conn.commit()
+
+        return {"exito": True, "mensaje": "Partido eliminado correctamente."}
+    except mysql.connector.Error as err:
+        return {"error": f"Error SQL: {err}"}
+    finally:
+        cursor.close()
+        conn.close()
+

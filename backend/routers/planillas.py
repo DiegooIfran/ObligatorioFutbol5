@@ -89,3 +89,32 @@ def borrar_planilla_jugador(id_partido, ci_jugador, user_role="admin"):
     finally:
         cursor.close()
         conn.close()
+
+
+def obtener_planilla_partido(id_partido):
+    """
+    Obtiene los jugadores que figuran en la planilla de un partido.
+    """
+    conn = get_db_connection(user_role="planillero")
+    if not conn:
+        return []
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        sql = """
+            SELECT pp.id_partido, pp.ci_jugador, j.nombre, j.apellido,
+                   pp.id_equipo, e.nombre as equipo, ejt.numero_camiseta
+            FROM planilla_partido pp
+            JOIN jugador j ON pp.ci_jugador = j.ci
+            JOIN equipo e ON pp.id_equipo = e.id_equipo
+            JOIN partido p ON pp.id_partido = p.id_partido
+            LEFT JOIN equipo_jugador_torneo ejt ON pp.ci_jugador = ejt.ci_jugador AND pp.id_equipo = ejt.id_equipo AND p.id_torneo = ejt.id_torneo
+            WHERE pp.id_partido = %s
+            ORDER BY pp.id_equipo ASC, ejt.numero_camiseta ASC
+        """
+        cursor.execute(sql, (id_partido,))
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
