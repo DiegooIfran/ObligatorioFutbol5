@@ -1154,7 +1154,9 @@ GRANT INSERT, UPDATE ON Obligatorio_Futbol5.gol TO 'usr_planillero'@'localhost';
 GRANT INSERT, UPDATE ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
 
 GRANT UPDATE (estado) ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
-
+-- Usuario exclusivo para el login: es el único que puede leer la columna contraseña
+CREATE USER IF NOT EXISTS 'usr_login'@'localhost' IDENTIFIED BY 'Contraseña123!';
+GRANT SELECT ON Obligatorio_Futbol5.login TO 'usr_login'@'localhost';
 FLUSH PRIVILEGES;
 
 
