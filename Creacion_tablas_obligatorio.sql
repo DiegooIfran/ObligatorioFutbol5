@@ -981,7 +981,8 @@ create view resultados as
 select p.id_partido, p.numero_fecha,
        p.id_equipo_local, e.nombre as equipo_local,
        p.id_equipo_visitante, e2.nombre as equipo_visitante,
-       gf.goles_a_favor as goles_e_local, gf2.goles_a_favor as goles_e_visitante
+       gf.goles_a_favor as goles_e_local, gf2.goles_a_favor as goles_e_visitante,
+       p.id_torneo
 from partido p
 join equipo e on p.id_equipo_local = e.id_equipo
 join equipo e2 on p.id_equipo_visitante = e2.id_equipo
@@ -1014,6 +1015,36 @@ from jugador j
 join tarjeta t on j.ci = t.ci_jugador
 group by j.ci, j.nombre, j.apellido, sanciones_totales, acumulacion_amarillas, disciplinarias) as h
 group by h.ci, h.nombre, h.apellido
+order by sanciones_totales desc;
+
+-- view tarjetas_jugador_torneo
+create view tarjetas_jugador_torneo as
+select h.ci, h.nombre, h.apellido,
+       sum(h.sanciones_totales) as sanciones_totales,
+       sum(h.acumulacion_amarillas) as acumulacion_de_amarillas,
+       sum(h.disciplinarias) as sanciones_disciplinarias,
+       sum(h.amarillas) as tarjetas_amarillas,
+       sum(h.rojas) as tarjetas_rojas,
+       h.id_torneo
+from (
+select j.ci, j.nombre, j.apellido,
+       count(*) as sanciones_totales,
+       count(case when sj.motivo = 'acumulación de amarillas' then 1 end) as acumulacion_amarillas,
+       count(case when sj.motivo = 'disciplinaria' then 1 end) as disciplinarias,
+       0 as amarillas, 0 as rojas, sj.id_torneo
+from jugador j
+join sancion_jugador sj on j.ci = sj.ci_jugador
+group by j.ci, j.nombre, j.apellido, amarillas, rojas, sj.id_torneo
+union all
+select j.ci, j.nombre, j.apellido,
+       0 as sanciones_totales, 0 as acumulacion_amarillas, 0 as disciplinarias,
+       count(case when t.color = 'amarilla' then 1 end),
+       count(case when t.color = 'roja' then 1 end), p.id_torneo
+from jugador j
+join tarjeta t on j.ci = t.ci_jugador
+join partido p on t.id_partido = p.id_partido
+group by j.ci, j.nombre, j.apellido, sanciones_totales, acumulacion_amarillas, disciplinarias, p.id_torneo) as h
+group by h.ci, h.nombre, h.apellido, h.id_torneo
 order by sanciones_totales desc;
 
 -- view porcentaje_participación
