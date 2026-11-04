@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def registrar_gol(id_partido, ci_jugador, minuto, autogol=False, user_role="planillero"):
+def registrar_gol(id_partido, ci_jugador, minuto, autogol=False, user_role=None):
     """
     Registra un gol en un partido.
     Valida:
@@ -46,7 +46,7 @@ def registrar_gol(id_partido, ci_jugador, minuto, autogol=False, user_role="plan
         conn.close()
 
 
-def modificar_gol(id_gol, nuevo_minuto=None, nuevo_autogol=None, nueva_ci_jugador=None, user_role="planillero"):
+def modificar_gol(id_gol, nuevo_minuto=None, nuevo_autogol=None, nueva_ci_jugador=None, user_role=None):
     """
     Modifica los datos de un gol (minuto, autogol o jugador asignado de la misma planilla).
     Sujeto a la regla de 48 horas posteriores a la disputa del partido.
@@ -89,7 +89,7 @@ def modificar_gol(id_gol, nuevo_minuto=None, nuevo_autogol=None, nueva_ci_jugado
         conn.close()
 
 
-def eliminar_gol(id_gol, user_role="admin"):
+def eliminar_gol(id_gol, user_role=None):
     """
     Elimina un gol registrado.
     Sujeto a la regla de las 48 horas posteriores al fin del partido.
@@ -114,11 +114,11 @@ def eliminar_gol(id_gol, user_role="admin"):
         conn.close()
 
 
-def obtener_goles_partido(id_partido):
+def obtener_goles_partido(id_partido, user_role=None):
     """
     Obtiene todos los goles anotados en un partido.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -139,4 +139,3 @@ def obtener_goles_partido(id_partido):
     finally:
         cursor.close()
         conn.close()
-

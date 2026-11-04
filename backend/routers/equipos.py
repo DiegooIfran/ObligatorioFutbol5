@@ -2,14 +2,14 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_equipo(nombre, id_torneo, id_facultad, ci_capitan):
+def crear_equipo(nombre, id_torneo, id_facultad, ci_capitan, user_role=None):
     """
     Crea un nuevo equipo en un torneo.
     Valida pertenencia de facultad del capitán, que el torneo esté en inscripción,
     y que el capitán no pertenezca a otro equipo del torneo.
     (El trigger trg_equipo_inscribe_capitan inscribe automáticamente al capitán con camiseta #1).
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -60,13 +60,13 @@ def crear_equipo(nombre, id_torneo, id_facultad, ci_capitan):
         conn.close()
 
 
-def actualizar_equipo(id_equipo, nombre=None, ci_capitan=None):
+def actualizar_equipo(id_equipo, nombre=None, ci_capitan=None, user_role=None):
     """
     Actualiza el nombre del equipo o su capitán.
     Nota: La facultad y el torneo son inmutables por regla de integridad.
     Si se cambia el capitán, este debe pertenecer al plantel del equipo y a la misma facultad.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -107,12 +107,12 @@ def actualizar_equipo(id_equipo, nombre=None, ci_capitan=None):
         conn.close()
 
 
-def eliminar_equipo(id_equipo):
+def eliminar_equipo(id_equipo, user_role=None):
     """
     Elimina un equipo si no tiene partidos programados o jugados.
     Elimina también las inscripciones de su plantel asociadas.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -146,11 +146,11 @@ def eliminar_equipo(id_equipo):
         conn.close()
 
 
-def obtener_equipos(id_torneo=None):
+def obtener_equipos(id_torneo=None, user_role=None):
     """
     Obtiene la lista de equipos, opcionalmente filtrada por torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -177,11 +177,11 @@ def obtener_equipos(id_torneo=None):
         conn.close()
 
 
-def obtener_equipo(id_equipo):
+def obtener_equipo(id_equipo, user_role=None):
     """
     Obtiene un equipo por su ID.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return None
 
@@ -192,4 +192,3 @@ def obtener_equipo(id_equipo):
     finally:
         cursor.close()
         conn.close()
-

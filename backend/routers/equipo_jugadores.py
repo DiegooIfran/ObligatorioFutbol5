@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def inscribir_jugador_equipo(id_equipo, ci_jugador, id_torneo, numero_camiseta):
+def inscribir_jugador_equipo(id_equipo, ci_jugador, id_torneo, numero_camiseta, user_role=None):
     """
     Inscribe un jugador al plantel de un equipo en un torneo.
     Valida:
@@ -15,7 +15,7 @@ def inscribir_jugador_equipo(id_equipo, ci_jugador, id_torneo, numero_camiseta):
     if not (1 <= int(numero_camiseta) <= 99):
         return {"error": "El número de camiseta debe estar entre 1 y 99."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -95,14 +95,14 @@ def inscribir_jugador_equipo(id_equipo, ci_jugador, id_torneo, numero_camiseta):
         conn.close()
 
 
-def modificar_camiseta_jugador(id_equipo, ci_jugador, id_torneo, nuevo_numero_camiseta):
+def modificar_camiseta_jugador(id_equipo, ci_jugador, id_torneo, nuevo_numero_camiseta, user_role=None):
     """
     Modifica el dorsal/número de camiseta de un jugador en un equipo.
     """
     if not (1 <= int(nuevo_numero_camiseta) <= 99):
         return {"error": "El número de camiseta debe estar entre 1 y 99."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -139,12 +139,12 @@ def modificar_camiseta_jugador(id_equipo, ci_jugador, id_torneo, nuevo_numero_ca
         conn.close()
 
 
-def eliminar_jugador_equipo(id_equipo, ci_jugador, id_torneo):
+def eliminar_jugador_equipo(id_equipo, ci_jugador, id_torneo, user_role=None):
     """
     Elimina a un jugador del plantel de un equipo.
     Valida que no sea el capitán del equipo ni tenga planillas disputadas.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -184,11 +184,11 @@ def eliminar_jugador_equipo(id_equipo, ci_jugador, id_torneo):
         conn.close()
 
 
-def obtener_plantel(id_equipo, id_torneo):
+def obtener_plantel(id_equipo, id_torneo, user_role=None):
     """
     Obtiene la lista de jugadores inscriptos en el plantel de un equipo para un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -208,4 +208,3 @@ def obtener_plantel(id_equipo, id_torneo):
     finally:
         cursor.close()
         conn.close()
-

@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_turno(hora_inicio, hora_fin):
+def crear_turno(hora_inicio, hora_fin, user_role=None):
     """
     Crea un turno horario.
     Reglas de negocio:
@@ -11,7 +11,7 @@ def crear_turno(hora_inicio, hora_fin):
     - Duración exacta de 1 hora
     - Minutos y segundos en 0 (:00:00)
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -28,11 +28,11 @@ def crear_turno(hora_inicio, hora_fin):
         conn.close()
 
 
-def actualizar_turno(id_turno, hora_inicio, hora_fin):
+def actualizar_turno(id_turno, hora_inicio, hora_fin, user_role=None):
     """
     Actualiza el rango horario de un turno.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -53,11 +53,11 @@ def actualizar_turno(id_turno, hora_inicio, hora_fin):
         conn.close()
 
 
-def eliminar_turno(id_turno):
+def eliminar_turno(id_turno, user_role=None):
     """
     Elimina un turno si no está asignado a ningún partido.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -81,11 +81,11 @@ def eliminar_turno(id_turno):
         conn.close()
 
 
-def obtener_turnos():
+def obtener_turnos(user_role=None):
     """
     Obtiene la lista de todos los turnos disponibles.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -96,4 +96,3 @@ def obtener_turnos():
     finally:
         cursor.close()
         conn.close()
-

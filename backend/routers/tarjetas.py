@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def registrar_tarjeta(id_partido, ci_jugador, minuto, color, user_role="planillero"):
+def registrar_tarjeta(id_partido, ci_jugador, minuto, color, user_role=None):
     """
     Registra una tarjeta (amarilla o roja) en un partido.
     Valida:
@@ -51,7 +51,7 @@ def registrar_tarjeta(id_partido, ci_jugador, minuto, color, user_role="planille
         conn.close()
 
 
-def modificar_tarjeta(id_tarjeta, nuevo_minuto, user_role="planillero"):
+def modificar_tarjeta(id_tarjeta, nuevo_minuto, user_role=None):
     """
     Modifica el minuto de una tarjeta registrada.
     Nota: Por regla de negocio (trg_tarjeta_upd), no se puede cambiar el partido, jugador ni color;
@@ -82,7 +82,7 @@ def modificar_tarjeta(id_tarjeta, nuevo_minuto, user_role="planillero"):
         conn.close()
 
 
-def eliminar_tarjeta(id_tarjeta, user_role="admin"):
+def eliminar_tarjeta(id_tarjeta, user_role=None):
     """
     Elimina una tarjeta registrada (y limpia su sanción automática asociada).
     Sujeto al plazo de 48 horas posteriores al partido.
@@ -108,11 +108,11 @@ def eliminar_tarjeta(id_tarjeta, user_role="admin"):
         conn.close()
 
 
-def obtener_tarjetas_partido(id_partido):
+def obtener_tarjetas_partido(id_partido, user_role=None):
     """
     Obtiene las tarjetas registradas en un partido.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -133,4 +133,3 @@ def obtener_tarjetas_partido(id_partido):
     finally:
         cursor.close()
         conn.close()
-

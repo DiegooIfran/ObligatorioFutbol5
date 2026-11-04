@@ -2,11 +2,11 @@ import mysql.connector
 from db import get_db_connection
 
 
-def obtener_tabla_posiciones(id_torneo):
+def obtener_tabla_posiciones(id_torneo, user_role=None):
     """
     Obtiene la tabla de posiciones filtrada por edición del torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -32,16 +32,16 @@ def obtener_tabla_posiciones(id_torneo):
         conn.close()
 
 
-def obtener_tabla_goleadores(id_torneo):
+def obtener_tabla_goleadores(id_torneo, user_role=None):
     """
     Obtiene los goleadores del torneo desde la vista 'tabla_goleadores'.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
     try:
-       query = """
+        query = """
             SELECT ci, nombre, apellido, equipo, goles
             FROM tabla_goleadores
             WHERE id_torneo = %s
@@ -55,13 +55,15 @@ def obtener_tabla_goleadores(id_torneo):
         conn.close()
 
 
+# Alias para compatibilidad con código existente
+obtener_goleadores = obtener_tabla_goleadores
 
 
-def obtener_tabla_fair_play(id_torneo):
+def obtener_tabla_fair_play(id_torneo, user_role=None):
     """
     Obtiene los puntos y estadísticas de Fair Play por equipo en un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -79,11 +81,11 @@ def obtener_tabla_fair_play(id_torneo):
         conn.close()
 
 
-def obtener_promedio_goles_fecha(id_torneo):
+def obtener_promedio_goles_fecha(id_torneo, user_role=None):
     """
     Obtiene el promedio de goles por fecha disputada en un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -101,11 +103,11 @@ def obtener_promedio_goles_fecha(id_torneo):
         conn.close()
 
 
-def obtener_promedio_goles_edicion():
+def obtener_promedio_goles_edicion(user_role=None):
     """
     Obtiene el promedio de goles por edición (general de todos los torneos).
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -122,11 +124,11 @@ def obtener_promedio_goles_edicion():
         conn.close()
 
 
-def obtener_canchas_turnos():
+def obtener_canchas_turnos(user_role=None):
     """
     Obtiene la cantidad de usos de canchas y turnos (general de todos los torneos).
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -143,11 +145,11 @@ def obtener_canchas_turnos():
         conn.close()
 
 
-def obtener_jugadores_facultad(id_torneo):
+def obtener_jugadores_facultad(id_torneo, user_role=None):
     """
     Obtiene la distribución de jugadores por facultad y grado para un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -166,11 +168,11 @@ def obtener_jugadores_facultad(id_torneo):
         conn.close()
 
 
-def obtener_sin_figurar(id_torneo):
+def obtener_sin_figurar(id_torneo, user_role=None):
     """
     Obtiene los jugadores inscriptos que no figuraron en ninguna planilla del torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -188,13 +190,15 @@ def obtener_sin_figurar(id_torneo):
         conn.close()
 
 
+# Alias descriptivo
+obtener_jugadores_sin_figurar = obtener_sin_figurar
 
 
-def obtener_sanciones_equipo(id_torneo):
+def obtener_sanciones_equipo(id_torneo, user_role=None):
     """
     Obtiene el resumen de sanciones por equipo y por motivo en un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -213,11 +217,11 @@ def obtener_sanciones_equipo(id_torneo):
         conn.close()
 
 
-def obtener_porcentaje_jugados(id_torneo):
+def obtener_porcentaje_jugados(id_torneo, user_role=None):
     """
     Obtiene el porcentaje de partidos jugados vs cancelados/postergados de un torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -234,11 +238,11 @@ def obtener_porcentaje_jugados(id_torneo):
         conn.close()
 
 
-def obtener_resultados(id_torneo=None):
+def obtener_resultados(id_torneo=None, user_role=None):
     """
     Obtiene el detalle de resultados de los partidos disputados, filtrando por torneo si se especifica.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -270,11 +274,11 @@ def obtener_resultados(id_torneo=None):
         conn.close()
 
 
-def obtener_tarjetas_jugador():
+def obtener_tarjetas_jugador(user_role=None):
     """
     Obtiene el consolidado de sanciones y tarjetas por jugador (general de todos los torneos).
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -293,11 +297,11 @@ def obtener_tarjetas_jugador():
         conn.close()
 
 
-def obtener_tarjetas_jugador_torneo(id_torneo):
+def obtener_tarjetas_jugador_torneo(id_torneo, user_role=None):
     """
     Obtiene el consolidado de sanciones y tarjetas por jugador en un torneo específico.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)
@@ -317,11 +321,11 @@ def obtener_tarjetas_jugador_torneo(id_torneo):
         conn.close()
 
 
-def obtener_porcentaje_participacion(id_torneo):
+def obtener_porcentaje_participacion(id_torneo, user_role=None):
     """
     Obtiene el porcentaje de participación de cada jugador según los partidos de su equipo en el torneo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
     cursor = conn.cursor(dictionary=True)

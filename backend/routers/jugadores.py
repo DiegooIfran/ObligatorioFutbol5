@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_jugador(ci, nombre, apellido, email, fecha_nacimiento, id_facultad, tipo):
+def crear_jugador(ci, nombre, apellido, email, fecha_nacimiento, id_facultad, tipo, user_role=None):
     """
     Crea un nuevo jugador validando rango de CI, tipo de jugador y existencia de la facultad.
     """
@@ -13,7 +13,7 @@ def crear_jugador(ci, nombre, apellido, email, fecha_nacimiento, id_facultad, ti
     if tipo not in tipos_validos:
         return {"error": f"Tipo de jugador no válido. Debe ser uno de: {', '.join(tipos_validos)}."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -44,12 +44,12 @@ def crear_jugador(ci, nombre, apellido, email, fecha_nacimiento, id_facultad, ti
         conn.close()
 
 
-def actualizar_jugador(ci, nombre=None, apellido=None, email=None, fecha_nacimiento=None, id_facultad=None, tipo=None):
+def actualizar_jugador(ci, nombre=None, apellido=None, email=None, fecha_nacimiento=None, id_facultad=None, tipo=None, user_role=None):
     """
     Actualiza la información de un jugador.
     Si se cambia tipo o facultad, valida que el jugador no esté inscripto en torneos no finalizados.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -98,11 +98,11 @@ def actualizar_jugador(ci, nombre=None, apellido=None, email=None, fecha_nacimie
         conn.close()
 
 
-def eliminar_jugador(ci):
+def eliminar_jugador(ci, user_role=None):
     """
     Elimina a un jugador si no tiene dependencias (inscripciones, capitanías, planillas, etc.).
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -132,11 +132,11 @@ def eliminar_jugador(ci):
         conn.close()
 
 
-def obtener_jugadores(id_facultad=None):
+def obtener_jugadores(id_facultad=None, user_role=None):
     """
     Obtiene la lista de jugadores, opcionalmente filtrada por facultad.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -152,11 +152,11 @@ def obtener_jugadores(id_facultad=None):
         conn.close()
 
 
-def obtener_jugador(ci):
+def obtener_jugador(ci, user_role=None):
     """
     Obtiene un jugador por su cédula.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return None
 
@@ -167,4 +167,3 @@ def obtener_jugador(ci):
     finally:
         cursor.close()
         conn.close()
-

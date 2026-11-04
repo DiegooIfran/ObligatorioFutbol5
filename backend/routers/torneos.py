@@ -3,7 +3,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_torneo(nombre, anio, semestre, fecha_inicio, fecha_fin, estado="inscripción"):
+def crear_torneo(nombre, anio, semestre, fecha_inicio, fecha_fin, estado="inscripción", user_role=None):
     """
     Crea un nuevo torneo con sus validaciones de negocio (fechas, año y semestre).
     """
@@ -26,7 +26,7 @@ def crear_torneo(nombre, anio, semestre, fecha_inicio, fecha_fin, estado="inscri
     if f_inicio >= f_fin:
         return {"error": "La fecha de inicio debe ser anterior a la fecha de fin."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -46,12 +46,12 @@ def crear_torneo(nombre, anio, semestre, fecha_inicio, fecha_fin, estado="inscri
         conn.close()
 
 
-def actualizar_torneo(id_torneo, nombre=None, anio=None, semestre=None, fecha_inicio=None, fecha_fin=None, estado=None):
+def actualizar_torneo(id_torneo, nombre=None, anio=None, semestre=None, fecha_inicio=None, fecha_fin=None, estado=None, user_role=None):
     """
     Actualiza los datos de un torneo.
     Si se modifican las fechas, valida que no queden partidos programados por fuera del nuevo rango.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -106,11 +106,11 @@ def actualizar_torneo(id_torneo, nombre=None, anio=None, semestre=None, fecha_in
         conn.close()
 
 
-def eliminar_torneo(id_torneo):
+def eliminar_torneo(id_torneo, user_role=None):
     """
     Elimina un torneo si no tiene equipos ni partidos registrados.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -138,11 +138,11 @@ def eliminar_torneo(id_torneo):
         conn.close()
 
 
-def obtener_torneos():
+def obtener_torneos(user_role=None):
     """
     Retorna la lista de torneos.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -155,11 +155,11 @@ def obtener_torneos():
         conn.close()
 
 
-def obtener_torneo(id_torneo):
+def obtener_torneo(id_torneo, user_role=None):
     """
     Retorna un torneo por su ID.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return None
 
@@ -170,4 +170,3 @@ def obtener_torneo(id_torneo):
     finally:
         cursor.close()
         conn.close()
-

@@ -2,10 +2,11 @@ import mysql.connector
 from db import get_db_connection
 
 
-def registrar_planilla_jugador(id_partido, ci_jugador, id_equipo):
-    # Inserta un jugador a la planilla. Utiliza el usuario 'usr_planillero'.
-
-    conn = get_db_connection(user_role="planillero")
+def registrar_planilla_jugador(id_partido, ci_jugador, id_equipo, user_role=None):
+    """
+    Inserta un jugador a la planilla.
+    """
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -33,13 +34,13 @@ def registrar_planilla_jugador(id_partido, ci_jugador, id_equipo):
         return {"exito": True, "mensaje": "Jugador agregado a la planilla con éxito."}
 
     except mysql.connector.Error as err:
-        return {"error": f"Error en operacion de planillero: {err}"}
+        return {"error": f"Error en operacion de planilla: {err}"}
     finally:
         cursor.close()
         conn.close()
 
 
-def borrar_planilla_jugador(id_partido, ci_jugador, user_role="admin"):
+def borrar_planilla_jugador(id_partido, ci_jugador, user_role=None):
     """
     Elimina a un jugador de la planilla de un partido.
     Valida que el jugador figure en la planilla y que no tenga goles ni tarjetas asociadas.
@@ -91,11 +92,11 @@ def borrar_planilla_jugador(id_partido, ci_jugador, user_role="admin"):
         conn.close()
 
 
-def obtener_planilla_partido(id_partido):
+def obtener_planilla_partido(id_partido, user_role=None):
     """
     Obtiene los jugadores que figuran en la planilla de un partido.
     """
-    conn = get_db_connection(user_role="planillero")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -117,4 +118,3 @@ def obtener_planilla_partido(id_partido):
     finally:
         cursor.close()
         conn.close()
-

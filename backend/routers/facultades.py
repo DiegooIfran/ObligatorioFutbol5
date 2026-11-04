@@ -2,11 +2,11 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_facultad(nombre):
+def crear_facultad(nombre, user_role=None):
     """
     Registra una nueva facultad.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -26,11 +26,11 @@ def crear_facultad(nombre):
         conn.close()
 
 
-def actualizar_facultad(id_facultad, nombre):
+def actualizar_facultad(id_facultad, nombre, user_role=None):
     """
     Modifica el nombre de una facultad existente.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -50,11 +50,11 @@ def actualizar_facultad(id_facultad, nombre):
         conn.close()
 
 
-def eliminar_facultad(id_facultad):
+def eliminar_facultad(id_facultad, user_role=None):
     """
     Elimina una facultad si no tiene jugadores o equipos asociados.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -82,11 +82,11 @@ def eliminar_facultad(id_facultad):
         conn.close()
 
 
-def obtener_facultades():
+def obtener_facultades(user_role=None):
     """
     Obtiene la lista completa de facultades.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -97,4 +97,3 @@ def obtener_facultades():
     finally:
         cursor.close()
         conn.close()
-

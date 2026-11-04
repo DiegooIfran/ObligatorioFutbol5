@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_cancha(nombre_cancha, id_complejo, superficie, techada):
+def crear_cancha(nombre_cancha, id_complejo, superficie, techada, user_role=None):
     """
     Crea una cancha asociada a un complejo deportivo.
     Superficie debe ser 'sintetico' o 'parquet'.
@@ -10,7 +10,7 @@ def crear_cancha(nombre_cancha, id_complejo, superficie, techada):
     if superficie not in ("sintetico", "parquet"):
         return {"error": "Superficie no válida. Debe ser 'sintetico' o 'parquet'."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -41,11 +41,11 @@ def crear_cancha(nombre_cancha, id_complejo, superficie, techada):
         conn.close()
 
 
-def actualizar_cancha(nombre_cancha, id_complejo, nueva_superficie=None, nueva_techada=None):
+def actualizar_cancha(nombre_cancha, id_complejo, nueva_superficie=None, nueva_techada=None, user_role=None):
     """
     Actualiza la superficie o condición de techada de una cancha.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -77,11 +77,11 @@ def actualizar_cancha(nombre_cancha, id_complejo, nueva_superficie=None, nueva_t
         conn.close()
 
 
-def eliminar_cancha(nombre_cancha, id_complejo):
+def eliminar_cancha(nombre_cancha, id_complejo, user_role=None):
     """
     Elimina una cancha si no está asignada a ningún partido programado o jugado.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -112,11 +112,11 @@ def eliminar_cancha(nombre_cancha, id_complejo):
         conn.close()
 
 
-def obtener_canchas(id_complejo=None):
+def obtener_canchas(id_complejo=None, user_role=None):
     """
     Retorna la lista de canchas, opcionalmente filtrada por complejo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -143,4 +143,3 @@ def obtener_canchas(id_complejo=None):
     finally:
         cursor.close()
         conn.close()
-

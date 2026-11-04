@@ -18,12 +18,48 @@ CREDENTIALS = {
     }
 }
 
-# Retorna una conexión activa a MySQL con las credenciales del rol solicitado.
-def get_db_connection(user_role="admin"):
-    if user_role not in CREDENTIALS:
-        raise ValueError("Rol no válido")
+# Variable global que guarda el rol de la sesión actual ('admin' o 'planillero')
+CURRENT_ROLE = "admin"
 
-    creds = CREDENTIALS[user_role]
+
+def set_current_role(role):
+    """
+    Configura el rol global de la sesión tras iniciar sesión.
+    Acepta 'admin', 'administrador', 'planillero' o 'login'.
+    """
+    global CURRENT_ROLE
+    if role in ("administrador", "admin"):
+        CURRENT_ROLE = "admin"
+    elif role == "planillero":
+        CURRENT_ROLE = "planillero"
+    elif role == "login":
+        CURRENT_ROLE = "login"
+    else:
+        raise ValueError(f"Rol no válido: {role}")
+
+
+def get_current_role():
+    """
+    Retorna el rol global configurado para la sesión.
+    """
+    return CURRENT_ROLE
+
+
+def get_db_connection(user_role=None):
+    """
+    Retorna una conexión activa a MySQL con las credenciales del rol solicitado.
+    Si no se especifica user_role (o es None), utiliza el rol global CURRENT_ROLE.
+    """
+    rol = user_role if user_role is not None else CURRENT_ROLE
+
+    # Normalizar 'administrador' a 'admin'
+    if rol in ("administrador", "admin"):
+        rol = "admin"
+
+    if rol not in CREDENTIALS:
+        raise ValueError(f"Rol no válido: {rol}")
+
+    creds = CREDENTIALS[rol]
 
     try:
         connection = mysql.connector.connect(

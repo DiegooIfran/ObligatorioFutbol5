@@ -1,8 +1,8 @@
 import mysql.connector
-from db import get_db_connection
+from db import get_db_connection, set_current_role
 
 
-# Importamos las funciones desarrolladas previamente en tus módulos
+# Importamos las funciones desarrolladas previamente en los módulos
 # from routers.partidos import programar_partido
 # from routers.planillas import registrar_planilla_jugador
 # from routers.reportes import obtener_tabla_posiciones, obtener_goleadores
@@ -134,6 +134,9 @@ def main():
         return
 
     print(f"\n[✓] Autenticación exitosa. Rol detectado: {usuario['rol'].upper()}")
+
+    # Configurar rol de sesión global para todas las funciones
+    set_current_role(usuario["rol"])
 
     # Redirección dinámica según el rol retornado por la tabla 'login'
     if usuario["rol"] == "administrador":

@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, time, date
 import mysql.connector
 from db import get_db_connection
 
-def programar_partido(id_torneo, numero_fecha, id_local, id_visitante, dia, id_turno, nombre_cancha, id_complejo):
+def programar_partido(id_torneo, numero_fecha, id_local, id_visitante, dia, id_turno, nombre_cancha, id_complejo, user_role=None):
     # Programa un partido validando todas las reglas de negocio en Python + SQL directos.
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -77,12 +77,12 @@ def editar_resultado_partido(id_partido, fecha_hora_disputa):
     return {"exito": True, "mensaje": "Dentro del plazo permitido para corrección."}
 
 
-def postergar_partido(id_partido, nueva_fecha, nueva_cancha, nuevo_id_turno=None, nuevo_id_complejo=None):
+def postergar_partido(id_partido, nueva_fecha, nueva_cancha, nuevo_id_turno=None, nuevo_id_complejo=None, user_role=None):
     """
     Pospone un partido actualizando su fecha y cancha (y opcionalmente turno y complejo).
     Cambia el estado del partido a 'postergado'.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -174,12 +174,12 @@ def postergar_partido(id_partido, nueva_fecha, nueva_cancha, nuevo_id_turno=None
         conn.close()
 
 
-def marcar_jugado(id_partido):
+def marcar_jugado(id_partido, user_role=None):
     """
     Marca un partido como 'jugado'.
     Valida que el partido exista y que ya haya finalizado según su día y hora de turno.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -234,12 +234,12 @@ def marcar_jugado(id_partido):
         conn.close()
 
 
-def cancelar_partido(id_partido):
+def cancelar_partido(id_partido, user_role=None):
     """
     Cancela un partido cambiando su estado a 'cancelado'.
     Valida que no esté previamente cancelado ni jugado ni con planilla registrada.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -275,12 +275,12 @@ def cancelar_partido(id_partido):
         conn.close()
 
 
-def eliminar_partido(id_partido):
+def eliminar_partido(id_partido, user_role=None):
     """
     Elimina físicamente un partido.
     El trigger trg_partido_del impide eliminar partidos que ya tengan estado 'jugado'.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -303,4 +303,3 @@ def eliminar_partido(id_partido):
     finally:
         cursor.close()
         conn.close()
-

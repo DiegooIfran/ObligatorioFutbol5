@@ -2,7 +2,7 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_sancion(ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas=1):
+def crear_sancion(ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas=1, user_role=None):
     """
     Registra una sanción disciplinaria para un jugador en un torneo.
     Motivos válidos: 'roja', 'acumulación de amarillas', 'disciplinaria'.
@@ -14,7 +14,7 @@ def crear_sancion(ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_f
     if int(numero_fecha_inicio) < 1 or int(cantidad_fechas) < 1:
         return {"error": "El número de fecha de inicio y la cantidad de fechas deben ser mayores o iguales a 1."}
 
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -43,11 +43,11 @@ def crear_sancion(ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_f
         conn.close()
 
 
-def actualizar_sancion(id_sancion, motivo=None, numero_fecha_inicio=None, cantidad_fechas=None):
+def actualizar_sancion(id_sancion, motivo=None, numero_fecha_inicio=None, cantidad_fechas=None, user_role=None):
     """
     Actualiza el motivo o la duración de una sanción.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -84,11 +84,11 @@ def actualizar_sancion(id_sancion, motivo=None, numero_fecha_inicio=None, cantid
         conn.close()
 
 
-def eliminar_sancion(id_sancion):
+def eliminar_sancion(id_sancion, user_role=None):
     """
     Elimina una sanción disciplinaria.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -109,11 +109,11 @@ def eliminar_sancion(id_sancion):
         conn.close()
 
 
-def obtener_sanciones(id_torneo=None, ci_jugador=None):
+def obtener_sanciones(id_torneo=None, ci_jugador=None, user_role=None):
     """
     Obtiene las sanciones registradas, opcionalmente filtradas por torneo o jugador.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -144,4 +144,3 @@ def obtener_sanciones(id_torneo=None, ci_jugador=None):
     finally:
         cursor.close()
         conn.close()
-

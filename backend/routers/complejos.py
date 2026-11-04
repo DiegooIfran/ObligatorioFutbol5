@@ -2,11 +2,11 @@ import mysql.connector
 from db import get_db_connection
 
 
-def crear_complejo(nombre, direccion, departamento):
+def crear_complejo(nombre, direccion, departamento, user_role=None):
     """
     Crea un nuevo complejo deportivo.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -23,11 +23,11 @@ def crear_complejo(nombre, direccion, departamento):
         conn.close()
 
 
-def actualizar_complejo(id_complejo, nombre=None, direccion=None, departamento=None):
+def actualizar_complejo(id_complejo, nombre=None, direccion=None, departamento=None, user_role=None):
     """
     Actualiza los datos de un complejo deportivo existente.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -54,11 +54,11 @@ def actualizar_complejo(id_complejo, nombre=None, direccion=None, departamento=N
         conn.close()
 
 
-def eliminar_complejo(id_complejo):
+def eliminar_complejo(id_complejo, user_role=None):
     """
     Elimina un complejo si no tiene canchas asociadas.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return {"error": "No se pudo conectar a la base de datos"}
 
@@ -82,11 +82,11 @@ def eliminar_complejo(id_complejo):
         conn.close()
 
 
-def obtener_complejos():
+def obtener_complejos(user_role=None):
     """
     Retorna la lista de complejos deportivos.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return []
 
@@ -99,11 +99,11 @@ def obtener_complejos():
         conn.close()
 
 
-def obtener_complejo(id_complejo):
+def obtener_complejo(id_complejo, user_role=None):
     """
     Retorna un complejo por su ID.
     """
-    conn = get_db_connection(user_role="admin")
+    conn = get_db_connection(user_role=user_role)
     if not conn:
         return None
 
@@ -114,4 +114,3 @@ def obtener_complejo(id_complejo):
     finally:
         cursor.close()
         conn.close()
-
