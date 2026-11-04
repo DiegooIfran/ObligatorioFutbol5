@@ -41,11 +41,12 @@ def obtener_tabla_goleadores(id_torneo):
         return []
     cursor = conn.cursor(dictionary=True)
     try:
-        query = """
+       query = """
             SELECT ci, nombre, apellido, equipo, goles
             FROM tabla_goleadores
             WHERE id_torneo = %s
-            ORDER BY goles DESC
+            ORDER BY goles DESC, apellido ASC, nombre ASC
+            LIMIT 10
         """
         cursor.execute(query, (id_torneo,))
         return cursor.fetchall()
