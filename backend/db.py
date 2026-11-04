@@ -10,6 +10,11 @@ CREDENTIALS = {
     "planillero": {
         "user": "usr_planillero",
         "password": "PlanilleroPass123!"
+    },
+    # Solo se usa para validar el login (SELECT sobre la tabla login)
+    "login": {
+        "user": "usr_login",
+        "password": "Contraseña123!"
     }
 }
 
