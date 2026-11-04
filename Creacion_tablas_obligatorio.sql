@@ -711,6 +711,13 @@ BEGIN
 
 end //
 
+CREATE TRIGGER trg_equipo_inscribe_capitan
+AFTER INSERT ON equipo
+FOR EACH ROW
+BEGIN
+    INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta)
+    VALUES (NEW.id_equipo, NEW.ci_capitan, NEW.id_torneo, 1);
+END //
 
 DELIMITER ;
 
