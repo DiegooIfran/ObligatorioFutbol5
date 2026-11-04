@@ -729,8 +729,7 @@ BEGIN
         SELECT COUNT(*) INTO otros_admins
         FROM login
         WHERE rol = 'administrador'
-          AND correo <> OLD.correo
-        FOR UPDATE;
+          AND correo <> OLD.correo;
 
         IF otros_admins = 0 THEN
             SIGNAL SQLSTATE '45000'
@@ -749,8 +748,7 @@ BEGIN
         SELECT COUNT(*) INTO otros_admins
         FROM login
         WHERE rol = 'administrador'
-          AND correo <> OLD.correo
-        FOR UPDATE;
+          AND correo <> OLD.correo;
 
         IF otros_admins = 0 THEN
             SIGNAL SQLSTATE '45000'
