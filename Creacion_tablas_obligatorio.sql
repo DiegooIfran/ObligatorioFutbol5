@@ -719,6 +719,46 @@ BEGIN
     VALUES (NEW.id_equipo, NEW.ci_capitan, NEW.id_torneo, 1);
 END //
 
+CREATE TRIGGER trg_login_bd_ultimo_admin
+BEFORE DELETE ON login
+FOR EACH ROW
+BEGIN
+    DECLARE otros_admins INT;
+
+    IF OLD.rol = 'administrador' THEN
+        SELECT COUNT(*) INTO otros_admins
+        FROM login
+        WHERE rol = 'administrador'
+          AND correo <> OLD.correo
+        FOR UPDATE;
+
+        IF otros_admins = 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'No se puede eliminar al ultimo administrador';
+        END IF;
+    END IF;
+END //
+
+CREATE TRIGGER trg_login_bu_ultimo_admin
+BEFORE UPDATE ON login
+FOR EACH ROW
+BEGIN
+    DECLARE otros_admins INT;
+
+    IF OLD.rol = 'administrador' AND NEW.rol <> 'administrador' THEN
+        SELECT COUNT(*) INTO otros_admins
+        FROM login
+        WHERE rol = 'administrador'
+          AND correo <> OLD.correo
+        FOR UPDATE;
+
+        IF otros_admins = 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'No se puede degradar al ultimo administrador';
+        END IF;
+    END IF;
+END //
+
 DELIMITER ;
 
 
@@ -1187,27 +1227,27 @@ INSERT INTO equipo (nombre, id_torneo, id_facultad, ci_capitan) VALUES
 -- ==========================================
 -- Ingeniería FC (id_equipo = 1)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(1, 10001001, 1, 10), (1, 10001002, 1, 5), (1, 10001003, 1, 8), (1, 10001004, 1, 9), (1, 10001005, 1, 4), (1, 10001006, 1, 7), (1, 10001007, 1, 1);
+(1, 10001002, 1, 5), (1, 10001003, 1, 8), (1, 10001004, 1, 9), (1, 10001005, 1, 4), (1, 10001006, 1, 7), (1, 10001007, 1, 99);
 
 -- Algoritmos United (id_equipo = 2)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(2, 10001008, 1, 10), (2, 10001009, 1, 2), (2, 10001010, 1, 3), (2, 10001011, 1, 6), (2, 10001012, 1, 7), (2, 10001013, 1, 9), (2, 10001014, 1, 11);
+(2, 10001009, 1, 2), (2, 10001010, 1, 3), (2, 10001011, 1, 6), (2, 10001012, 1, 7), (2, 10001013, 1, 9), (2, 10001014, 1, 11);
 
 -- Redes F.C. (id_equipo = 3)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(3, 10001015, 1, 1), (3, 10001016, 1, 4), (3, 10001017, 1, 5), (3, 10001018, 1, 8), (3, 10001019, 1, 10), (3, 10001020, 1, 14), (3, 10001021, 1, 9);
+(3, 10001016, 1, 4), (3, 10001017, 1, 5), (3, 10001018, 1, 8), (3, 10001019, 1, 10), (3, 10001020, 1, 14), (3, 10001021, 1, 9);
 
 -- Economía Juniors (id_equipo = 4)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(4, 20002001, 1, 10), (4, 20002002, 1, 2), (4, 20002003, 1, 3), (4, 20002004, 1, 4), (4, 20002005, 1, 7), (4, 20002006, 1, 9), (4, 20002007, 1, 12);
+(4, 20002002, 1, 2), (4, 20002003, 1, 3), (4, 20002004, 1, 4), (4, 20002005, 1, 7), (4, 20002006, 1, 9), (4, 20002007, 1, 12);
 
 -- Finanzas City (id_equipo = 5)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(5, 20002008, 1, 1), (5, 20002009, 1, 5), (5, 20002010, 1, 6), (5, 20002011, 1, 8), (5, 20002012, 1, 10), (5, 20002013, 1, 11), (5, 20002014, 1, 7);
+(5, 20002009, 1, 5), (5, 20002010, 1, 6), (5, 20002011, 1, 8), (5, 20002012, 1, 10), (5, 20002013, 1, 11), (5, 20002014, 1, 7);
 
 -- Contadores F.C. (id_equipo = 6)
 INSERT INTO equipo_jugador_torneo (id_equipo, ci_jugador, id_torneo, numero_camiseta) VALUES
-(6, 20002015, 1, 9), (6, 20002016, 1, 2), (6, 20002017, 1, 3), (6, 20002018, 1, 4), (6, 20002019, 1, 10), (6, 20002020, 1, 7), (6, 20002021, 1, 11);
+(6, 20002016, 1, 2), (6, 20002017, 1, 3), (6, 20002018, 1, 4), (6, 20002019, 1, 10), (6, 20002020, 1, 7), (6, 20002021, 1, 11);
 
 
 -- ==========================================
