@@ -19,6 +19,7 @@ create table jugador(
     fecha_nacimiento date not null,
     id_facultad int not null,
     tipo varchar(20) check (tipo in ('grado','postgrado','docente','funcionario')) not null,
+    constraint uq_ci_facultad unique (ci, id_facultad), -- necesario para fk en equipo
     constraint cedula_posible check ( ci>=10000000 and ci <= 60000000),
     foreign key (id_facultad) references facultad(id_facultad)
 );
@@ -43,9 +44,9 @@ create table equipo(
     id_facultad int not null,
     ci_capitan int not null,
     constraint uq_equipo_torneo unique (id_equipo, id_torneo), -- necesario para fk en ejt
+    constraint uq_nombre_torneo unique (nombre, id_torneo),
     foreign key (id_torneo) references torneo(id_torneo),
-    foreign key (id_facultad) references facultad(id_facultad),
-    foreign key (ci_capitan) references jugador(ci)
+    foreign key (ci_capitan, id_facultad) references jugador(ci,id_facultad) -- asegura que el capitan pertenezca a la facultad
 );
 create table equipo_jugador_torneo(
     id_equipo int not null,
@@ -573,11 +574,47 @@ CREATE TRIGGER trg_equipo_upd
 BEFORE UPDATE ON equipo
 FOR EACH ROW
 BEGIN
+    DECLARE v_equipos_capitan INT;
+    Declare v_nuevo_cap int;
+    declare v_capitan_de_otro int;
 
     IF NEW.id_torneo <> OLD.id_torneo OR NEW.id_facultad <> OLD.id_facultad THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Error: No se puede cambiar el torneo ni la facultad de un equipo, borralo y cargalo de nuevo.';
     END IF;
+    -- Validar que el capitán no pertenezca a otro equipo
+    -- En el update ya podemos verificar que el nuevo capitán pertenezca al equipo
+    -- ya está validado que el capitán pertenezca a la facultad con la fk
+    SELECT count(*) INTO v_equipos_capitan FROM equipo_jugador_torneo
+                                          WHERE id_torneo = NEW.id_torneo
+                                            and ci_jugador = NEW.ci_capitan
+                                            and id_equipo <> OLD.id_equipo;
+
+    IF v_equipos_capitan > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El capitán ya pertenece a un equipo del torneo.';
+    END IF;
+
+    SELECT count(*) INTO v_nuevo_cap FROM equipo_jugador_torneo
+                                          WHERE id_torneo = NEW.id_torneo
+                                            and ci_jugador = NEW.ci_capitan
+                                            and id_equipo = OLD.id_equipo;
+
+    IF v_nuevo_cap <> 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El nuevo capitán no pertenece al equipo.';
+    END IF;
+
+    -- como los equipos empiezan vacíos corremos este chequeo por las dudas, aunque en el backend se vaya a hacer directo
+    SELECT COUNT(*) INTO v_capitan_de_otro
+        FROM equipo
+        WHERE id_torneo = OLD.id_torneo
+          AND ci_capitan = NEW.ci_capitan
+          AND id_equipo <> OLD.id_equipo;
+
+        IF v_capitan_de_otro > 0 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya es capitán de otro equipo del torneo.';
+        END IF;
+
 END //
 
 -- torneo
@@ -600,9 +637,9 @@ BEGIN
     END IF;
 END //
 
---trigger para no borrar un partido jugado
-    
-    CREATE TRIGGER trg_partido_del
+-- trigger para no borrar un partido jugado
+
+CREATE TRIGGER trg_partido_del
 BEFORE DELETE ON partido
 FOR EACH ROW
 BEGIN
@@ -612,7 +649,7 @@ BEGIN
     END IF;
 END //
 
---Partido con estado jugado solo si su día y turno ya pasaron
+-- Partido con estado jugado solo si su día y turno ya pasaron
 CREATE TRIGGER trg_partido_jugado_ins
 BEFORE INSERT ON partido
 FOR EACH ROW
@@ -641,37 +678,41 @@ BEGIN
     END IF;
 END //
 
-    
+-- verificación de que capitán no tenga ningún equipo y nombre de equipo único
+CREATE TRIGGER trg_valida_inscripcion_equipo
+BEFORE INSERT ON equipo
+FOR EACH ROW
+BEGIN
+    DECLARE v_equipos_capitan INT;
+    declare v_capitan_de_otro int;
+
+    -- Validar que el capitán no pertenezca a otro equipo
+    -- No podemos ingresar directo al capitán ya que no tenemos la información de su numero,
+        -- Pero en el backend se hara directo uno tras otro
+    -- ya está validado que el capitán pertenezca a la facultad con la fk
+    SELECT count(*) INTO v_equipos_capitan FROM equipo_jugador_torneo
+                                          WHERE id_torneo = NEW.id_torneo
+                                            and ci_jugador = NEW.ci_capitan;
+    IF v_equipos_capitan > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El capitán ya pertenece a un equipo del torneo.';
+    END IF;
+
+    -- como los equipos empiezan vacíos corremos este chequeo por las dudas
+    SELECT COUNT(*) INTO v_capitan_de_otro
+        FROM equipo
+        WHERE id_torneo = NEW.id_torneo
+          AND ci_capitan = NEW.ci_capitan
+          AND id_equipo <> NEW.id_equipo;
+
+        IF v_capitan_de_otro > 0 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya es capitán de otro equipo del torneo.';
+        END IF;
+
+end //
+
+
 DELIMITER ;
--- ==========================================
--- privilegios
--- ==========================================
--- Usuario para administradores (acceso completo)
-
-CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
-
-GRANT ALL PRIVILEGES ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
-REVOKE DROP ON *.* FROM 'usr_admin'@'localhost';
-
-
--- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
-
-CREATE USER IF NOT EXISTS 'usr_planillero'@'localhost' IDENTIFIED BY 'PlanilleroPass123!';
-
-GRANT SELECT ON Obligatorio_Futbol5.* TO 'usr_planillero'@'localhost';
-
-GRANT INSERT, UPDATE ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
-
-GRANT INSERT, UPDATE ON Obligatorio_Futbol5.gol TO 'usr_planillero'@'localhost';
-
-GRANT INSERT, UPDATE ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
-
-GRANT UPDATE (estado) ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
-
-
-
-FLUSH PRIVILEGES;
-
 
 
 -- ==========================================
@@ -949,6 +990,94 @@ join (select h.id_equipo, count(*) as equipo_participaciones
 group by j.ci, j.nombre, j.apellido, e.id_equipo, e.nombre, ejt.id_torneo
 order by porcentaje_participaciones desc;
 
+-- ==========================================
+-- privilegios
+-- ==========================================
+-- Usuario para administradores (acceso completo)
+
+CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
+
+GRANT insert, update, delete ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
+-- hay que darle los select uno por uno ya que si le damos para OBligatorio_Futbol5.* no se lo podemos sacar de login
+-- que por razones obvias no queremos que tenga acceso a login
+-- tablas
+GRANT SELECT ON Obligatorio_Futbol5.cancha TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.complejo TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.equipo TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.equipo_jugador_torneo TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.facultad TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.gol TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.jugador TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.partido TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.planilla_partido TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sancion_jugador TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjeta TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.torneo TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.turno TO 'usr_admin'@'localhost';
+-- vistas
+GRANT SELECT ON Obligatorio_Futbol5.canchas_turnos TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.goles_partido TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.goles_partido_en_contra TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.jugadores_facultad TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.porcentaje_jugados TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.porcentaje_participacion TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.promedio_goles_edicion TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.promedio_goles_fecha TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.resultados TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sanciones_equipo TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sin_figurar TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_fair_play TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_goleadores TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_posiciones TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador TO 'usr_admin'@'localhost';
+
+
+-- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
+
+CREATE USER IF NOT EXISTS 'usr_planillero'@'localhost' IDENTIFIED BY 'PlanilleroPass123!';
+
+-- hay que darle los select uno por uno ya que si le damos para OBligatorio_Futbol5.* no se lo podemos sacar de login
+-- que por razones obvias no queremos que tenga acceso a login
+-- tablas
+GRANT SELECT ON Obligatorio_Futbol5.cancha TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.complejo TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.equipo TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.equipo_jugador_torneo TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.facultad TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.gol TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.jugador TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sancion_jugador TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
+-- vistas
+GRANT SELECT ON Obligatorio_Futbol5.canchas_turnos TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.goles_partido TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.goles_partido_en_contra TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.jugadores_facultad TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.porcentaje_jugados TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.porcentaje_participacion TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.promedio_goles_edicion TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.promedio_goles_fecha TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.resultados TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sanciones_equipo TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.sin_figurar TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_fair_play TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_goleadores TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tabla_posiciones TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador TO 'usr_planillero'@'localhost';
+
+
+GRANT INSERT, UPDATE ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
+
+GRANT INSERT, UPDATE ON Obligatorio_Futbol5.gol TO 'usr_planillero'@'localhost';
+
+GRANT INSERT, UPDATE ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
+
+GRANT UPDATE (estado) ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
+
+FLUSH PRIVILEGES;
+
 
 -- Inserciones de datos base (6 equipos y 3 fehcas)
 -- ==========================================
@@ -1209,7 +1338,7 @@ INSERT INTO gol (id_partido, ci_jugador, minuto, autogol) VALUES
 (7, 20002016, 19, false),
 (7, 20002017, 41, false),
 
--- Partido 8 (Algoritmos 3 - 2 Economía)
+-- Partido 8 (Algoritmos 2 - 3 Economía)
 (8, 10001009, 11, true), -- gol en contra
 (8, 10001011, 26, false),
 (8, 10001012, 54, false),
@@ -1230,4 +1359,3 @@ INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES
 (4, 10001006, 50, 'roja'),
 (5, 20002014, 25, 'amarilla'),
 (7, 20002016, 45, 'roja');
-
