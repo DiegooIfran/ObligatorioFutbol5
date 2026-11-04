@@ -44,19 +44,25 @@ def actualizar_usuario(correo, nueva_contrasena=None, nuevo_rol=None):
 
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT * FROM login WHERE correo = %s", (correo,))
+        # cambio 1: usr_admin solo puede leer correo y rol, no la contraseña
+        cursor.execute("SELECT correo, rol FROM login WHERE correo = %s", (correo,))
         usuario = cursor.fetchone()
         if not usuario:
             return {"error": "El usuario no existe."}
 
-        pass_final = nueva_contrasena if nueva_contrasena is not None else usuario["contrasena"]
+        # Cambio 2: se borró la línea de pass_final (leía la contraseña actual)
         rol_final = nuevo_rol if nuevo_rol is not None else usuario["rol"]
 
         if rol_final not in ("administrador", "planillero"):
             return {"error": "Rol no válido. Debe ser 'administrador' o 'planillero'."}
 
-        sql = "UPDATE login SET contrasena = %s, rol = %s WHERE correo = %s"
-        cursor.execute(sql, (pass_final, rol_final, correo))
+        # cambio 3: si no hay contraseña nueva, se actualiza solo el rol
+        if nueva_contrasena is not None:
+            sql = "UPDATE login SET contrasena = %s, rol = %s WHERE correo = %s"
+            cursor.execute(sql, (nueva_contrasena, rol_final, correo))
+        else:
+            sql = "UPDATE login SET rol = %s WHERE correo = %s"
+            cursor.execute(sql, (rol_final, correo))
         conn.commit()
 
         return {"exito": True, "mensaje": "Usuario actualizado correctamente."}
