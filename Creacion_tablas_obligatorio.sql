@@ -785,6 +785,92 @@ BEGIN
     END IF;
 END //
 
+-- No se puede cargar un gol de un jugador despues del minuto en que recibio una roja
+CREATE TRIGGER trg_gol_post_roja_ins
+BEFORE INSERT ON gol
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM tarjeta
+               WHERE id_partido = NEW.id_partido
+                 AND ci_jugador = NEW.ci_jugador
+                 AND color = 'roja'
+                 AND minuto < NEW.minuto) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya habia sido expulsado (roja) antes de ese minuto.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_gol_post_roja_upd
+BEFORE UPDATE ON gol
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM tarjeta
+               WHERE id_partido = NEW.id_partido
+                 AND ci_jugador = NEW.ci_jugador
+                 AND color = 'roja'
+                 AND minuto < NEW.minuto) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya habia sido expulsado (roja) antes de ese minuto.';
+    END IF;
+END //
+
+-- No se puede cargar una tarjeta despues de la roja, ni una roja antes de goles/tarjetas ya cargados
+CREATE TRIGGER trg_tarjeta_post_roja_ins
+BEFORE INSERT ON tarjeta
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM tarjeta
+               WHERE id_partido = NEW.id_partido
+                 AND ci_jugador = NEW.ci_jugador
+                 AND color = 'roja'
+                 AND minuto < NEW.minuto) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya habia sido expulsado (roja) antes de ese minuto.';
+    END IF;
+
+    IF NEW.color = 'roja' AND (
+           EXISTS (SELECT 1 FROM gol
+                   WHERE id_partido = NEW.id_partido
+                     AND ci_jugador = NEW.ci_jugador
+                     AND minuto > NEW.minuto)
+        OR EXISTS (SELECT 1 FROM tarjeta
+                   WHERE id_partido = NEW.id_partido
+                     AND ci_jugador = NEW.ci_jugador
+                     AND minuto > NEW.minuto)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador tiene goles o tarjetas despues de ese minuto, no puede ser expulsado antes.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_tarjeta_post_roja_upd
+BEFORE UPDATE ON tarjeta
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM tarjeta
+               WHERE id_partido = NEW.id_partido
+                 AND ci_jugador = NEW.ci_jugador
+                 AND color = 'roja'
+                 AND minuto < NEW.minuto
+                 AND id_tarjeta <> NEW.id_tarjeta) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador ya habia sido expulsado (roja) antes de ese minuto.';
+    END IF;
+
+    IF NEW.color = 'roja' AND (
+           EXISTS (SELECT 1 FROM gol
+                   WHERE id_partido = NEW.id_partido
+                     AND ci_jugador = NEW.ci_jugador
+                     AND minuto > NEW.minuto)
+        OR EXISTS (SELECT 1 FROM tarjeta
+                   WHERE id_partido = NEW.id_partido
+                     AND ci_jugador = NEW.ci_jugador
+                     AND minuto > NEW.minuto
+                     AND id_tarjeta <> NEW.id_tarjeta)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: El jugador tiene goles o tarjetas despues de ese minuto, no puede ser expulsado antes.';
+    END IF;
+END //
+    
 DELIMITER ;
 
 
