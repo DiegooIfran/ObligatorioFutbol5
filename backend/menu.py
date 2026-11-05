@@ -35,7 +35,7 @@ class OperacionCancelada(Exception):
     pass
 
 
-PALABRAS_CANCELAR = {"cancelar", "cancel", "salir", "volver", "v"}
+PALABRAS_CANCELAR = {"cancelar", "cancel", "salir", "volver", "v", "0"}
 
 
 # ==========================================
