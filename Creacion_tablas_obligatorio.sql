@@ -20,7 +20,7 @@ create table jugador(
     id_facultad int not null,
     tipo varchar(20) check (tipo in ('grado','postgrado','docente','funcionario')) not null,
     constraint uq_ci_facultad unique (ci, id_facultad), -- necesario para fk en equipo
-    constraint cedula_posible check ( ci>=10000000 and ci <= 60000000),
+    constraint cedula_posible check ( ci>=10000000 and ci <= 99999999),
     foreign key (id_facultad) references facultad(id_facultad)
 );
 create table torneo(
