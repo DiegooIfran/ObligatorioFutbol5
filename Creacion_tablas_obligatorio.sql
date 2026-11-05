@@ -234,6 +234,13 @@ BEGIN
     DECLARE v_cancha_ocupada INT;
     declare v_fecha_inicio_t date;
     declare v_fecha_fin_t date;
+    DECLARE v_estado_torneo VARCHAR(20);
+
+    -- Validar que el torneo no esté finalizado
+    SELECT estado INTO v_estado_torneo FROM torneo WHERE id_torneo = NEW.id_torneo;
+    IF v_estado_torneo = 'finalizado' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: No se pueden crear partidos en torneos finalizados.';
+    END IF;
 
 -- 1. Validar que ambos equipos pertenezcan a la misma edición del torneo
     SELECT id_torneo INTO v_torneo_local FROM equipo WHERE id_equipo = NEW.id_equipo_local;
@@ -713,6 +720,13 @@ FOR EACH ROW
 BEGIN
     DECLARE v_equipos_capitan INT;
     declare v_capitan_de_otro int;
+    DECLARE v_estado_torneo VARCHAR(20);
+
+    -- 1. Validar que el torneo esté en etapa de inscripción
+    SELECT estado INTO v_estado_torneo FROM torneo WHERE id_torneo = NEW.id_torneo;
+    IF v_estado_torneo <> 'inscripción' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Los equipos solo se pueden registrar mientras el torneo está en inscripción.';
+    END IF;
 
     -- Validar que el capitán no pertenezca a otro equipo
     -- No podemos ingresar directo al capitán ya que no tenemos la información de su numero,
