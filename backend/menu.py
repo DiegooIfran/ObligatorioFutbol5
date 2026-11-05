@@ -717,7 +717,7 @@ def menu_abm_jugadores():
             if opcion == "1":
                 print("\n--- CREAR JUGADOR ---")
                 print("(Escriba '0' o 'cancelar' en cualquier campo para volver)")
-                ci = pedir_int("CI del jugador (10000000-60000000): ")
+                ci = pedir_int("CI del jugador (10000000-99999999): ")
                 nombre = pedir_input("Nombre: ")
                 apellido = pedir_input("Apellido: ")
                 email = pedir_input("Email: ")
