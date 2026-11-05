@@ -1221,7 +1221,7 @@ def mostrar_menu_administrador(correo_usuario):
         print("4. ABM de Complejos Deportivos")
         print("5. ABM de Facultades")
         print("6. ABM de Jugadores")
-        print("3. ABM de Logins (Usuarios)")
+        print("7. ABM de Logins (Usuarios)")
         print("0. Cerrar Sesión")
 
         opcion = input("\nSeleccione una opción: ").strip()
