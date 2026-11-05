@@ -940,8 +940,10 @@ group by p.numero_fecha, p.id_torneo;
 
 -- view promedio de goles por edicion (torneo)
 create view promedio_goles_edicion as
-select t.id_torneo, t.nombre as torneo, round(avg(pg.promedio_goles),2) as promedio_goles from torneo t
-join promedio_goles_fecha pg on t.id_torneo = pg.id_torneo
+select t.id_torneo, t.nombre as torneo, round(sum(gp.goles_a_favor) / count(distinct gp.id_partido), 2) as promedio_goles
+from torneo t
+join partido p on p.id_torneo = t.id_torneo
+join goles_partido gp on gp.id_partido = p.id_partido
 group by t.id_torneo, t.nombre;
 
 -- view canchas y turnos más utilizados (asumiendo que se realiza para ver disponibilidad lo hicimos general de todos los torneos)
