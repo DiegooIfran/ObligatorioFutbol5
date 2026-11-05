@@ -9,7 +9,8 @@ def registrar_gol(id_partido, ci_jugador, minuto, autogol=False, user_role=None)
     - Minuto entre 1 y 60.
     - Que el jugador figure en la planilla del partido.
     - Que el partido esté en estado 'jugado'.
-    - Que esté dentro del plazo de 48 horas posteriores al partido.
+    - El plazo de 48 horas y la regla de la roja los controlan los triggers
+    trg_gol_plazo_ins y trg_gol_post_roja_ins en la base de datos.
     """
     if not (1 <= int(minuto) <= 60):
         return {"error": "El minuto del gol debe estar comprendido entre 1 y 60."}
@@ -49,7 +50,8 @@ def registrar_gol(id_partido, ci_jugador, minuto, autogol=False, user_role=None)
 def modificar_gol(id_gol, nuevo_minuto=None, nuevo_autogol=None, nueva_ci_jugador=None, user_role=None):
     """
     Modifica los datos de un gol (minuto, autogol o jugador asignado de la misma planilla).
-    Sujeto a la regla de 48 horas posteriores a la disputa del partido.
+    El plazo de 48 horas y la regla de la roja los controlan los triggers
+    trg_gol_plazo_upd y trg_gol_post_roja_upd en la base de datos.
     """
     conn = get_db_connection(user_role=user_role)
     if not conn:
@@ -92,7 +94,7 @@ def modificar_gol(id_gol, nuevo_minuto=None, nuevo_autogol=None, nueva_ci_jugado
 def eliminar_gol(id_gol, user_role=None):
     """
     Elimina un gol registrado.
-    Sujeto a la regla de las 48 horas posteriores al fin del partido.
+    El plazo de 48 horas lo controla el trigger trg_gol_plazo_del en la base de datos.
     """
     conn = get_db_connection(user_role=user_role)
     if not conn:
