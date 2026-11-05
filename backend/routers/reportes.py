@@ -205,7 +205,7 @@ def obtener_sanciones_equipo(id_torneo, user_role=None):
     try:
         query = """
             SELECT id_equipo, equipo, sanciones_totales, rojas,
-                   acumulacion_de_amarillas, sanciones_disciplinarias
+                   acumulacion_de_amarillas, disciplinarias
             FROM sanciones_equipo
             WHERE id_torneo = %s
             ORDER BY sanciones_totales DESC

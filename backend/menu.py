@@ -225,6 +225,8 @@ def menu_abm_torneos():
 
         except OperacionCancelada:
             print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
+        except ValueError:
+            print("\n[X] Error: Fecha inválida. Use el formato YYYY-MM-DD.")
 
 
 # ==========================================

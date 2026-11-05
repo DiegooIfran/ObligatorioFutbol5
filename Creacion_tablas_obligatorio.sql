@@ -1111,24 +1111,24 @@ DROP USER IF EXISTS 'usr_admin'@'localhost', 'usr_planillero'@'localhost', 'usr_
 
 CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
 
-GRANT insert, update, delete ON Obligatorio_Futbol5.* TO 'usr_admin'@'localhost';
+GRANT INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.login TO 'usr_admin'@'localhost';
 -- hay que darle los select uno por uno ya que si le damos para OBligatorio_Futbol5.* no se lo podemos sacar de login
 -- que por razones obvias no queremos que tenga acceso a login
 -- tablas
-GRANT SELECT ON Obligatorio_Futbol5.cancha TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.cancha TO 'usr_admin'@'localhost';
 GRANT SELECT (correo, rol) ON Obligatorio_Futbol5.login TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.complejo TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.equipo TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.equipo_jugador_torneo TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.facultad TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.gol TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.jugador TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.partido TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.planilla_partido TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.sancion_jugador TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.tarjeta TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.torneo TO 'usr_admin'@'localhost';
-GRANT SELECT ON Obligatorio_Futbol5.turno TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.complejo TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.equipo TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.equipo_jugador_torneo TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.facultad TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.gol TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.jugador TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.partido TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.planilla_partido TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.sancion_jugador TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.tarjeta TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.torneo TO 'usr_admin'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Obligatorio_Futbol5.turno TO 'usr_admin'@'localhost';
 -- vistas
 GRANT SELECT ON Obligatorio_Futbol5.canchas_turnos TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.goles_partido TO 'usr_admin'@'localhost';
