@@ -6,8 +6,8 @@ def crear_jugador(ci, nombre, apellido, email, fecha_nacimiento, id_facultad, ti
     """
     Crea un nuevo jugador validando rango de CI, tipo de jugador y existencia de la facultad.
     """
-    if not (10000000 <= int(ci) <= 60000000):
-        return {"error": "La cédula debe estar comprendida entre 10000000 y 60000000."}
+    if not (10000000 <= int(ci) <= 99999999):
+        return {"error": "La cédula debe estar comprendida entre 10000000 y 99999999."}
 
     tipos_validos = ("grado", "postgrado", "docente", "funcionario")
     if tipo not in tipos_validos:
