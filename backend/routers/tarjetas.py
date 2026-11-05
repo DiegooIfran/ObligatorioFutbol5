@@ -10,7 +10,8 @@ def registrar_tarjeta(id_partido, ci_jugador, minuto, color, user_role=None):
     - Minuto entre 1 y 60.
     - Que el jugador figure en la planilla del partido.
     - Que el partido esté en estado 'jugado'.
-    - Que esté dentro del plazo de 48 horas posteriores al partido.
+    - El plazo de 48 horas y la regla de la roja los controlan los triggers
+    trg_tarjeta_plazo_ins y trg_tarjeta_post_roja_ins en la base de datos.
     (El trigger trg_auto_sancion_tarjeta genera la sanción automática si corresponde).
     """
     if color not in ("amarilla", "roja"):
@@ -85,7 +86,7 @@ def modificar_tarjeta(id_tarjeta, nuevo_minuto, user_role=None):
 def eliminar_tarjeta(id_tarjeta, user_role=None):
     """
     Elimina una tarjeta registrada (y limpia su sanción automática asociada).
-    Sujeto al plazo de 48 horas posteriores al partido.
+    El plazo de 48 horas lo controla el trigger trg_tarjeta_plazo_del en la base de datos.
     """
     conn = get_db_connection(user_role=user_role)
     if not conn:
