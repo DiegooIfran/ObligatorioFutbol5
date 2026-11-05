@@ -15,7 +15,7 @@ create table jugador(
     ci int primary key,
     nombre varchar(20) not null,
     apellido varchar(20) not null,
-    email varchar(50) not null,
+    email varchar(50) not null unique,
     fecha_nacimiento date not null,
     id_facultad int not null,
     tipo varchar(20) check (tipo in ('grado','postgrado','docente','funcionario')) not null,
