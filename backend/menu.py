@@ -71,7 +71,9 @@ def mostrar_resultado(resultado):
                     print(f"  {fila}")
     else:
         print(resultado)
-
+        
+    # Pausa de lectura para evitar que el menú empuje el resultado hacia arriba
+    input("\nPresione Enter para continuar...")
 
 def pedir_input(mensaje, obligatorio=True, permitir_cancelar=True):
     """
