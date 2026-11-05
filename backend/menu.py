@@ -800,7 +800,7 @@ def menu_abm_partidos(id_torneo):
                 id_equipo_local = pedir_int("ID equipo local: ")
                 id_equipo_visitante = pedir_int("ID equipo visitante: ")
                 dia = pedir_input("Fecha del partido (YYYY-MM-DD): ")
-                id_turno = pedir_int("ID del turno: ")
+                id_turno = pedir_int("ID del turno (1 - 18:00 y 5 - 22:00): ")
                 nombre_cancha = pedir_input("Nombre de la cancha: ")
                 id_complejo = pedir_int("ID del complejo deportivo: ")
                 resultado = programar_partido(
@@ -1043,65 +1043,6 @@ def menu_abm_tarjetas(id_torneo):
 
 
 # ==========================================
-# ABM DE TURNOS
-# ==========================================
-def menu_abm_turnos():
-    while True:
-        print("\n" + "-" * 40)
-        print("  ABM DE TURNOS")
-        print("-" * 40)
-        print("1. Crear turno")
-        print("2. Modificar / Actualizar turno")
-        print("3. Eliminar / Dar de baja turno")
-        print("4. Obtener / Listar turnos")
-        print("0. Volver")
-
-        opcion = input("\nSeleccione una opción: ").strip()
-
-        if opcion == "0":
-            break
-
-        try:
-            if opcion == "1":
-                print("\n--- CREAR TURNO ---")
-                print("(Escriba '0' o 'cancelar' en cualquier campo para volver)")
-                hora_inicio = pedir_input("Hora de inicio (HH:MM o HH:MM:SS): ")
-                hora_fin = pedir_input("Hora de fin (HH:MM o HH:MM:SS): ")
-                resultado = crear_turno(hora_inicio, hora_fin)
-                mostrar_resultado(resultado)
-
-            elif opcion == "2":
-                print("\n--- MODIFICAR / ACTUALIZAR TURNO ---")
-                print("(Escriba '0' o 'cancelar' para volver)")
-                id_turno = pedir_int("ID del turno a actualizar: ")
-                hora_inicio = pedir_input("Nueva hora de inicio (HH:MM o HH:MM:SS): ")
-                hora_fin = pedir_input("Nueva hora de fin (HH:MM o HH:MM:SS): ")
-                resultado = actualizar_turno(id_turno, hora_inicio, hora_fin)
-                mostrar_resultado(resultado)
-
-            elif opcion == "3":
-                print("\n--- ELIMINAR / DAR DE BAJA TURNO ---")
-                print("(Escriba '0' o 'cancelar' para volver)")
-                id_turno = pedir_int("ID del turno a eliminar: ")
-                if pedir_confirmacion(f"¿Confirma eliminar el turno {id_turno}? (s/n): "):
-                    resultado = eliminar_turno(id_turno)
-                    mostrar_resultado(resultado)
-                else:
-                    print("\n[i] Operación cancelada.")
-
-            elif opcion == "4":
-                print("\n--- LISTAR TURNOS ---")
-                resultado = obtener_turnos()
-                mostrar_resultado(resultado)
-
-            else:
-                print("[!] Opción no válida.")
-
-        except OperacionCancelada:
-            print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
-
-
-# ==========================================
 # MENÚ DE REPORTES (POR TORNEO)
 # ==========================================
 def menu_reportes(id_torneo):
@@ -1168,7 +1109,7 @@ def menu_torneo_admin(id_torneo, torneo_info=None):
     """
     Submenú de gestión completa de un torneo seleccionado.
     Ofrece ABMs de: canchas, complejos, equipos, inscripciones, facultades,
-    goles, jugadores, partidos, planillas, sanciones, tarjetas, turnos y reportes.
+    goles, jugadores, partidos, planillas, sanciones, tarjetas y reportes.
     """
     if torneo_info and isinstance(torneo_info, dict):
         nombre_torneo = torneo_info.get("nombre", f"ID {id_torneo}")
@@ -1194,8 +1135,7 @@ def menu_torneo_admin(id_torneo, torneo_info=None):
         print("9.  ABM de Planillas")
         print("10. ABM de Sanciones")
         print("11. ABM de Tarjetas")
-        print("12. ABM de Turnos")
-        print("13. Ver Reportes")
+        print("12. Ver Reportes")
         print("0.  Volver al Menú Principal")
 
         opcion = input("\nSeleccione una opción: ").strip()
@@ -1223,8 +1163,6 @@ def menu_torneo_admin(id_torneo, torneo_info=None):
         elif opcion == "11":
             menu_abm_tarjetas(id_torneo)
         elif opcion == "12":
-            menu_abm_turnos()
-        elif opcion == "13":
             menu_reportes(id_torneo)
         elif opcion == "0":
             break
