@@ -303,3 +303,52 @@ def eliminar_partido(id_partido, user_role=None):
     finally:
         cursor.close()
         conn.close()
+
+def obtener_partidos(id_torneo=None, dia=None, estado=None, user_role=None):
+    """
+    Lista los partidos con los nombres de los equipos, el horario y la cancha.
+    """
+    conn = get_db_connection(user_role=user_role)
+    if not conn:
+        return []
+
+    cursor = conn.cursor(dictionary=True)
+    try:
+        sql = """
+            SELECT p.id_partido, p.id_torneo, p.numero_fecha,
+                   p.id_equipo_local, el.nombre AS equipo_local,
+                   p.id_equipo_visitante, ev.nombre AS equipo_visitante,
+                   p.dia, t.hora_inicio, t.hora_fin,
+                   p.nombre_cancha, p.id_complejo, c.nombre AS complejo,
+                   p.estado
+            FROM partido p
+            JOIN equipo el ON p.id_equipo_local = el.id_equipo
+            JOIN equipo ev ON p.id_equipo_visitante = ev.id_equipo
+            JOIN turno t ON p.id_turno = t.id_turno
+            JOIN complejo c ON p.id_complejo = c.id_complejo
+            WHERE 1 = 1
+        """
+        params = []
+
+        # Cada filtro se agrega solo si se pasó, y su valor va siempre con %s
+        # estos filtros se appendean al where 1=1, por eso en necesario. Sin el where no se puede usar el and.
+        if id_torneo is not None:
+            sql += " AND p.id_torneo = %s"
+            params.append(id_torneo)
+        if dia is not None:
+            sql += " AND p.dia = %s"
+            params.append(dia)
+        if estado is not None:
+            sql += " AND p.estado = %s"
+            params.append(estado)
+
+        sql += " ORDER BY p.dia, t.hora_inicio, p.id_partido"
+
+        cursor.execute(sql, tuple(params))
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print(f"[ERROR SQL]: {err}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
