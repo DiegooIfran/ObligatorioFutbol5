@@ -65,18 +65,6 @@ def programar_partido(id_torneo, numero_fecha, id_local, id_visitante, dia, id_t
         conn.close()
 
 
-def editar_resultado_partido(id_partido, fecha_hora_disputa):
-    # Valida la regla de las 48 horas posteriores a la disputa para editar el partido.
-    ahora = datetime.now()
-    limite_horas = fecha_hora_disputa + timedelta(hours=48)
-
-    if ahora > limite_horas:
-        return {"error": "Ha expirado el plazo de 48 horas para modificar o corregir el resultado de este partido."}
-
-    # Actualiza
-    return {"exito": True, "mensaje": "Dentro del plazo permitido para corrección."}
-
-
 def postergar_partido(id_partido, nueva_fecha, nueva_cancha, nuevo_id_turno=None, nuevo_id_complejo=None, user_role=None):
     """
     Pospone un partido actualizando su fecha y cancha (y opcionalmente turno y complejo).
