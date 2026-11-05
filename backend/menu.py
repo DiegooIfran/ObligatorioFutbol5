@@ -1110,8 +1110,9 @@ def menu_reportes(id_torneo):
 def menu_torneo_admin(id_torneo, torneo_info=None):
     """
     Submenú de gestión completa de un torneo seleccionado.
-    Ofrece ABMs de: canchas, complejos, equipos, inscripciones, facultades,
-    goles, jugadores, partidos, planillas, sanciones, tarjetas y reportes.
+    Solo contiene entidades dependientes del torneo.
+    Ofrece ABMs de: equipos, inscripciones, goles, partidos, 
+    planillas, sanciones, tarjetas y reportes.
     """
     if torneo_info and isinstance(torneo_info, dict):
         nombre_torneo = torneo_info.get("nombre", f"ID {id_torneo}")
@@ -1126,45 +1127,33 @@ def menu_torneo_admin(id_torneo, torneo_info=None):
         print("\n" + "=" * 55)
         print(f"  GESTIÓN DE TORNEO: {nombre_torneo} (ID: {id_torneo})")
         print("=" * 55)
-        print("1.  ABM de Canchas")
-        print("2.  ABM de Complejos Deportivos")
-        print("3.  ABM de Equipos")
-        print("4.  ABM de Inscripciones (Planteles)")
-        print("5.  ABM de Facultades")
-        print("6.  ABM de Goles")
-        print("7.  ABM de Jugadores")
-        print("8.  ABM de Partidos")
-        print("9.  ABM de Planillas")
-        print("10. ABM de Sanciones")
-        print("11. ABM de Tarjetas")
-        print("12. Ver Reportes")
-        print("0.  Volver al Menú Principal")
+        print("1. ABM de Equipos")
+        print("2. ABM de Inscripciones (Planteles)")
+        print("3. ABM de Goles")
+        print("4. ABM de Partidos")
+        print("5. ABM de Planillas")
+        print("6. ABM de Sanciones")
+        print("7. ABM de Tarjetas")
+        print("8. Ver Reportes")
+        print("0. Volver al Menú Principal")
 
         opcion = input("\nSeleccione una opción: ").strip()
 
         if opcion == "1":
-            menu_abm_canchas()
-        elif opcion == "2":
-            menu_abm_complejos()
-        elif opcion == "3":
             menu_abm_equipos(id_torneo)
-        elif opcion == "4":
+        elif opcion == "2":
             menu_abm_inscripciones(id_torneo)
-        elif opcion == "5":
-            menu_abm_facultades()
-        elif opcion == "6":
+        elif opcion == "3":
             menu_abm_goles(id_torneo)
-        elif opcion == "7":
-            menu_abm_jugadores()
-        elif opcion == "8":
+        elif opcion == "4":
             menu_abm_partidos(id_torneo)
-        elif opcion == "9":
+        elif opcion == "5":
             menu_abm_planillas(id_torneo)
-        elif opcion == "10":
+        elif opcion == "6":
             menu_abm_sanciones(id_torneo)
-        elif opcion == "11":
+        elif opcion == "7":
             menu_abm_tarjetas(id_torneo)
-        elif opcion == "12":
+        elif opcion == "8":
             menu_reportes(id_torneo)
         elif opcion == "0":
             break
@@ -1220,12 +1209,7 @@ def seleccionar_y_trabajar_torneo():
 # ==========================================
 def mostrar_menu_administrador(correo_usuario):
     """
-    Menú principal del rol Administrador.
-    Permite:
-    1. Trabajar en un torneo (solicita el ID)
-    2. ABM de Torneos
-    3. ABM de Logins / Usuarios
-    0. Cerrar Sesión
+    Menú principal del rol Administrador con todas las entidades globales.
     """
     while True:
         print("\n" + "=" * 55)
@@ -1233,6 +1217,10 @@ def mostrar_menu_administrador(correo_usuario):
         print("=" * 55)
         print("1. Trabajar en un torneo")
         print("2. ABM de Torneos")
+        print("3. ABM de Canchas")
+        print("4. ABM de Complejos Deportivos")
+        print("5. ABM de Facultades")
+        print("6. ABM de Jugadores")
         print("3. ABM de Logins (Usuarios)")
         print("0. Cerrar Sesión")
 
@@ -1240,13 +1228,18 @@ def mostrar_menu_administrador(correo_usuario):
 
         if opcion == "1":
             seleccionar_y_trabajar_torneo()
-
         elif opcion == "2":
             menu_abm_torneos()
-
         elif opcion == "3":
+            menu_abm_canchas()
+        elif opcion == "4":
+            menu_abm_complejos()
+        elif opcion == "5":
+            menu_abm_facultades()
+        elif opcion == "6":
+            menu_abm_jugadores()
+        elif opcion == "7":
             menu_abm_logins()
-
         elif opcion == "0":
             print("\nCerrando sesión de Administrador...")
             break
