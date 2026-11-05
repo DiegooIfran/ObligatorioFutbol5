@@ -1166,6 +1166,7 @@ GRANT SELECT ON Obligatorio_Futbol5.partido TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.sancion_jugador TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tarjeta TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.torneo TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.turno TO 'usr_planillero'@'localhost';
 -- vistas
 GRANT SELECT ON Obligatorio_Futbol5.canchas_turnos TO 'usr_planillero'@'localhost';

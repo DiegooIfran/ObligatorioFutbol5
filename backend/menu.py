@@ -1313,74 +1313,245 @@ def mostrar_menu_administrador(correo_usuario):
 
 
 # ==========================================
-# MENÚ PARA PLANILLEROS
+# MENÚ PARA PLANILLEROS (SIN OPCIONES DE ELIMINACIÓN)
 # ==========================================
-def mostrar_menu_planillero(correo_usuario):
-    """
-    Menú para el rol Planillero.
-    """
+def menu_planillas_planillero(id_torneo):
     while True:
-        print("\n" + "=" * 55)
-        print(f"   PANEL DE PLANILLERO (Sesión: {correo_usuario})")
-        print("=" * 55)
-        print("1. Cargar Planilla de Partido (Jugadores Presentes)")
-        print("2. Registrar Gol")
-        print("3. Registrar Tarjeta (Amarilla / Roja)")
-        print("4. Consultar Partidos Programados del Día")
-        print("0. Cerrar Sesión")
+        print("\n" + "-" * 40)
+        print(f"  PLANILLAS (Torneo {id_torneo})")
+        print("-" * 40)
+        print("1. Registrar jugador en planilla")
+        print("2. Obtener / Ver planilla de un partido")
+        print("0. Volver")
 
         opcion = input("\nSeleccione una opción: ").strip()
 
-        if opcion == "1":
-            print("\n--- CARGAR PLANILLA DE PARTIDO ---")
-            try:
+        if opcion == "0":
+            break
+
+        try:
+            if opcion == "1":
+                print("\n--- REGISTRAR JUGADOR EN PLANILLA ---")
+                print("(Escriba '0' o 'cancelar' en cualquier campo para volver)")
                 id_partido = pedir_int("ID del partido: ")
                 ci_jugador = pedir_int("CI del jugador: ")
                 id_equipo = pedir_int("ID del equipo: ")
                 resultado = registrar_planilla_jugador(id_partido, ci_jugador, id_equipo)
                 mostrar_resultado(resultado)
-            except OperacionCancelada:
-                print("\n[i] Operación cancelada.")
 
-        elif opcion == "2":
-            print("\n--- REGISTRAR GOL ---")
-            try:
+            elif opcion == "2":
+                print("\n--- VER PLANILLA DE UN PARTIDO ---")
+                print("(Escriba '0' o 'cancelar' para volver)")
+                id_partido = pedir_int("ID del partido: ")
+                resultado = obtener_planilla_partido(id_partido)
+                mostrar_resultado(resultado)
+
+            else:
+                print("[!] Opción no válida.")
+
+        except OperacionCancelada:
+            print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
+
+
+def menu_goles_planillero(id_torneo):
+    while True:
+        print("\n" + "-" * 40)
+        print(f"  GOLES (Torneo {id_torneo})")
+        print("-" * 40)
+        print("1. Registrar gol")
+        print("2. Modificar / Actualizar gol")
+        print("3. Obtener / Ver goles de un partido")
+        print("0. Volver")
+
+        opcion = input("\nSeleccione una opción: ").strip()
+
+        if opcion == "0":
+            break
+
+        try:
+            if opcion == "1":
+                print("\n--- REGISTRAR GOL ---")
+                print("(Escriba '0' o 'cancelar' en cualquier campo para volver)")
                 id_partido = pedir_int("ID del partido: ")
                 ci_jugador = pedir_int("CI del jugador: ")
-                minuto = pedir_int("Minuto (1-60): ")
+                minuto = pedir_int("Minuto del gol (1-60): ")
                 autogol_str = pedir_input("¿Es autogol? (s/n): ").lower()
                 autogol = autogol_str in ("s", "si", "sí", "1")
                 resultado = registrar_gol(id_partido, ci_jugador, minuto, autogol)
                 mostrar_resultado(resultado)
-            except OperacionCancelada:
-                print("\n[i] Operación cancelada.")
 
-        elif opcion == "3":
-            print("\n--- REGISTRAR TARJETA ---")
-            try:
+            elif opcion == "2":
+                print("\n--- MODIFICAR / ACTUALIZAR GOL ---")
+                print("(Escriba '0' o 'cancelar' para volver)")
+                id_gol = pedir_int("ID del gol a modificar: ")
+                print("(Deje vacío los campos que no desea modificar)")
+                nuevo_minuto = pedir_int("Nuevo minuto (1-60): ", obligatorio=False)
+                nuevo_autogol_str = pedir_input("¿Es autogol? (s/n, vacío=no cambiar): ", obligatorio=False)
+                nuevo_autogol = None
+                if nuevo_autogol_str:
+                    nuevo_autogol = nuevo_autogol_str.lower() in ("s", "si", "sí", "1")
+                nueva_ci = pedir_int("Nuevo CI del jugador: ", obligatorio=False)
+                resultado = modificar_gol(id_gol, nuevo_minuto, nuevo_autogol, nueva_ci)
+                mostrar_resultado(resultado)
+
+            elif opcion == "3":
+                print("\n--- VER GOLES DE UN PARTIDO ---")
+                print("(Escriba '0' o 'cancelar' para volver)")
+                id_partido = pedir_int("ID del partido: ")
+                resultado = obtener_goles_partido(id_partido)
+                mostrar_resultado(resultado)
+
+            else:
+                print("[!] Opción no válida.")
+
+        except OperacionCancelada:
+            print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
+
+
+def menu_tarjetas_planillero(id_torneo):
+    while True:
+        print("\n" + "-" * 40)
+        print(f"  TARJETAS (Torneo {id_torneo})")
+        print("-" * 40)
+        print("1. Registrar tarjeta")
+        print("2. Modificar / Actualizar tarjeta (minuto)")
+        print("3. Obtener / Ver tarjetas de un partido")
+        print("0. Volver")
+
+        opcion = input("\nSeleccione una opción: ").strip()
+
+        if opcion == "0":
+            break
+
+        try:
+            if opcion == "1":
+                print("\n--- REGISTRAR TARJETA ---")
+                print("(Escriba '0' o 'cancelar' en cualquier campo para volver)")
                 id_partido = pedir_int("ID del partido: ")
                 ci_jugador = pedir_int("CI del jugador: ")
                 minuto = pedir_int("Minuto (1-60): ")
                 color = pedir_input("Color (amarilla/roja): ").lower()
                 resultado = registrar_tarjeta(id_partido, ci_jugador, minuto, color)
                 mostrar_resultado(resultado)
-            except OperacionCancelada:
-                print("\n[i] Operación cancelada.")
 
+            elif opcion == "2":
+                print("\n--- MODIFICAR TARJETA ---")
+                print("(Escriba '0' o 'cancelar' para volver)")
+                id_tarjeta = pedir_int("ID de la tarjeta a modificar: ")
+                nuevo_minuto = pedir_int("Nuevo minuto (1-60): ")
+                resultado = modificar_tarjeta(id_tarjeta, nuevo_minuto)
+                mostrar_resultado(resultado)
+
+            elif opcion == "3":
+                print("\n--- VER TARJETAS DE UN PARTIDO ---")
+                print("(Escriba '0' o 'cancelar' para volver)")
+                id_partido = pedir_int("ID del partido: ")
+                resultado = obtener_tarjetas_partido(id_partido)
+                mostrar_resultado(resultado)
+
+            else:
+                print("[!] Opción no válida.")
+
+        except OperacionCancelada:
+            print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
+
+
+def menu_torneo_planillero(id_torneo, torneo_info, correo_usuario):
+    """
+    Submenú de operaciones del Planillero dentro de un torneo seleccionado:
+    - Registrar o consultar planillas (sin eliminar)
+    - Registrar, modificar o consultar goles (sin eliminar)
+    - Registrar, modificar o consultar tarjetas (sin eliminar)
+    - Marcar partido como 'jugado'
+    - Ver reportes
+    - Consultar partidos del torneo
+    """
+    nombre_torneo = torneo_info.get("nombre", f"ID {id_torneo}") if isinstance(torneo_info, dict) else f"ID {id_torneo}"
+
+    while True:
+        print("\n" + "=" * 55)
+        print(f"  PLANILLERO - TORNEO: {nombre_torneo} (ID: {id_torneo})")
+        print(f"  Sesión: {correo_usuario}")
+        print("=" * 55)
+        print("1. Registrar o consultar Planillas")
+        print("2. Registrar o modificar Goles")
+        print("3. Registrar o modificar Tarjetas")
+        print("4. Marcar partido como 'jugado'")
+        print("5. Ver Reportes")
+        print("6. Consultar partidos del torneo")
+        print("0. Cambiar de Torneo / Volver")
+
+        opcion = input("\nSeleccione una opción: ").strip()
+
+        if opcion == "1":
+            menu_planillas_planillero(id_torneo)
+        elif opcion == "2":
+            menu_goles_planillero(id_torneo)
+        elif opcion == "3":
+            menu_tarjetas_planillero(id_torneo)
         elif opcion == "4":
-            print("\n--- CONSULTAR PARTIDOS DEL DÍA ---")
+            print("\n--- MARCAR PARTIDO COMO JUGADO ---")
+            print("(Escriba '0' o 'cancelar' para volver)")
             try:
-                dia = pedir_input("Fecha (YYYY-MM-DD, vacío=hoy): ", obligatorio=False)
-                resultado = obtener_partidos(dia=dia)
+                id_partido = pedir_int("ID del partido a marcar como jugado: ")
+                resultado = marcar_jugado(id_partido)
                 mostrar_resultado(resultado)
             except OperacionCancelada:
-                print("\n[i] Operación cancelada.")
-
+                print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
+        elif opcion == "5":
+            menu_reportes(id_torneo)
+        elif opcion == "6":
+            print(f"\n--- PARTIDOS DEL TORNEO {id_torneo} ---")
+            try:
+                dia_filtro = pedir_input("Filtrar por fecha (YYYY-MM-DD, vacío=todas): ", obligatorio=False)
+                estado_filtro = pedir_input("Filtrar por estado (programado/jugado/postergado/cancelado, vacío=todos): ", obligatorio=False)
+                resultado = obtener_partidos(id_torneo=id_torneo, dia=dia_filtro, estado=estado_filtro)
+                mostrar_resultado(resultado)
+            except OperacionCancelada:
+                print("\n[i] Operación cancelada. Regresando a la pantalla anterior...")
         elif opcion == "0":
-            print("\nCerrando sesión de Planillero...")
             break
         else:
             print("[!] Opción no válida.")
+
+
+def mostrar_menu_planillero(correo_usuario):
+    """
+    Flujo de entrada para el rol Planillero.
+    Al loguearse se le pregunta en qué torneo va a trabajar.
+    """
+    while True:
+        print("\n" + "=" * 55)
+        print(f"   PANEL DE PLANILLERO (Sesión: {correo_usuario})")
+        print("   SELECCIONAR TORNEO PARA TRABAJAR")
+        print("   (Ingrese '0' o 'cancelar' para cerrar sesión)")
+        print("   (Ingrese '?' o 'listar' para ver torneos disponibles)")
+        print("=" * 55)
+
+        entrada = input("Ingrese el ID del torneo en el que va a trabajar: ").strip()
+
+        if entrada.lower() in PALABRAS_CANCELAR or entrada == "0":
+            print("\nCerrando sesión de Planillero...")
+            break
+
+        if entrada in ("?", "listar", "ver"):
+            print("\n--- TORNEOS DISPONIBLES ---")
+            torneos = obtener_torneos()
+            mostrar_resultado(torneos)
+            continue
+
+        try:
+            id_torneo = int(entrada)
+        except ValueError:
+            print("[!] Debe ingresar un número de ID válido (o '?' para listar, '0' para salir).")
+            continue
+
+        torneo = obtener_torneo(id_torneo)
+        if not torneo or (isinstance(torneo, dict) and "error" in torneo):
+            print(f"\n[X] Error: No se encontró ningún torneo con el ID {id_torneo}.")
+            continue
+
+        menu_torneo_planillero(id_torneo, torneo, correo_usuario)
 
 
 # ==========================================
