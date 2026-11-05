@@ -192,6 +192,34 @@ BEGIN
     END IF;
 END //
 
+-- Trigger: Validaciones al modificar jugadores en planteles
+CREATE TRIGGER trg_valida_actualizacion_jugador
+BEFORE update ON equipo_jugador_torneo
+FOR EACH ROW
+BEGIN
+
+    -- En update sólo se puede modificar el número camiseta,
+    IF OLD.ci_jugador <> NEW.ci_jugador or OLD.id_torneo <> NEW.id_torneo or OLD.id_equipo <> NEW.id_equipo THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Sólo se puede modificar el número de camiseta del jugador.';
+    END IF;
+
+END //
+
+-- Trigger 1: Validaciones al bajar jugadores en planteles
+CREATE TRIGGER trg_valida_baja_de_jugador
+BEFORE delete ON equipo_jugador_torneo
+FOR EACH ROW
+BEGIN
+    DECLARE v_estado_torneo VARCHAR(20);
+
+    -- 1. Validar que el torneo esté en etapa de inscripción
+    SELECT estado INTO v_estado_torneo FROM torneo WHERE id_torneo = OLD.id_torneo;
+    IF v_estado_torneo <> 'inscripción' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Los planteles solo pueden modificarse mientras el torneo está en inscripción.';
+    END IF;
+
+END //
+
 
 -- Trigger 2: Validaciones al programar un partido
 CREATE TRIGGER trg_valida_partido
@@ -875,12 +903,13 @@ order by puntos desc, diferencia_de_goles desc, goles_a_favor desc;
 
 -- view goleadores
 create view tabla_goleadores as
-select j.ci, j.nombre, j.apellido, e.nombre as equipo, count(g.id_gol) as goles, ejt.id_torneo from gol g
+select j.ci, j.nombre, j.apellido, e.nombre as equipo, count(g.id_gol) as goles, p.id_torneo from gol g
 join jugador j on g.ci_jugador = j.ci
-join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador
+join partido p on g.id_partido = p.id_partido
+join equipo_jugador_torneo ejt on j.ci = ejt.ci_jugador and ejt.id_torneo = p.id_torneo
 join equipo e on ejt.id_equipo = e.id_equipo
 where autogol = false
-group by j.ci, j.nombre, j.apellido, e.nombre, ejt.id_torneo
+group by j.ci, j.nombre, j.apellido, e.nombre, p.id_torneo
 order by goles desc;
 
 -- view tabla fair play
@@ -888,13 +917,14 @@ create view tabla_fair_play as
 select h.id_equipo, h.equipo, sum(h.puntos_fair_play) as puntos_fair_play, h.id_torneo
 from (select e.id_equipo, e.nombre as equipo, sum(ts.rojas*3+ts.amarillas) as puntos_fair_play, e.id_torneo
 from equipo e
-join (select e2.id_equipo,
+join (select e2.id_equipo, e2.id_torneo,
              count(case when t.color = 'amarilla' then 1 end) as amarillas,
              count(case when t.color = 'roja' then 1 end) as rojas
       from equipo e2
-      join equipo_jugador_torneo ejt2 on e2.id_equipo = ejt2.id_equipo
+      join equipo_jugador_torneo ejt2 on e2.id_equipo = ejt2.id_equipo and ejt2.id_torneo = e2.id_torneo
       join tarjeta t on ejt2.ci_jugador = t.ci_jugador
-      group by e2.id_equipo) as ts on e.id_equipo = ts.id_equipo
+      join partido p on t.id_partido = p.id_partido and p.id_torneo = e2.id_torneo
+      group by e2.id_equipo, e2.id_torneo) as ts on e.id_equipo = ts.id_equipo and e.id_torneo = ts.id_torneo
 group by e.id_equipo, e.nombre, e.id_torneo
       union
       select e.id_equipo, e.nombre, 0, e.id_torneo from equipo e) as h
@@ -958,12 +988,12 @@ create view sanciones_equipo as
 select e.id_equipo, e.nombre as equipo,
        count(case when sj.motivo is not null then 1 end) as sanciones_totales,
        count(case when sj.motivo = 'roja' then 1 end) as rojas,
-       count(case when sj.motivo = 'acumulación de amarillas' then 1 end) as acumulación_de_amarillas,
+       count(case when sj.motivo = 'acumulación de amarillas' then 1 end) as acumulacion_de_amarillas,
        count(case when sj.motivo = 'disciplinaria' then 1 end) as disciplinarias,
        e.id_torneo
 from equipo e
-join equipo_jugador_torneo ejt on e.id_equipo = ejt.id_equipo
-left join sancion_jugador sj on ejt.ci_jugador = sj.ci_jugador
+join equipo_jugador_torneo ejt on e.id_equipo = ejt.id_equipo and e.id_torneo = ejt.id_torneo
+left join sancion_jugador sj on ejt.ci_jugador = sj.ci_jugador and ejt.id_torneo = sj.id_torneo
 group by e.id_equipo, e.nombre, e.id_torneo
 order by sanciones_totales desc;
 
@@ -1062,10 +1092,12 @@ join (select h.id_equipo, count(*) as equipo_participaciones
       from (select e2.id_equipo, p.id_partido
             from equipo e2
             join partido p on e2.id_equipo = p.id_equipo_local
+            where p.estado = 'jugado'
             union
             select e3.id_equipo, p2.id_partido
             from equipo e3
-            join partido p2 on e3.id_equipo = p2.id_equipo_visitante) as h
+            join partido p2 on e3.id_equipo = p2.id_equipo_visitante
+            where p2.estado = 'jugado') as h
       group by h.id_equipo) as ep on e.id_equipo = ep.id_equipo
 group by j.ci, j.nombre, j.apellido, e.id_equipo, e.nombre, ejt.id_torneo
 order by porcentaje_participaciones desc;
@@ -1073,6 +1105,8 @@ order by porcentaje_participaciones desc;
 -- ==========================================
 -- privilegios
 -- ==========================================
+
+DROP USER IF EXISTS 'usr_admin'@'localhost', 'usr_planillero'@'localhost', 'usr_login'@'localhost';
 -- Usuario para administradores (acceso completo)
 
 CREATE USER IF NOT EXISTS 'usr_admin'@'localhost' IDENTIFIED BY 'AdminPass123!';
