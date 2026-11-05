@@ -1111,6 +1111,7 @@ GRANT SELECT ON Obligatorio_Futbol5.tabla_fair_play TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tabla_goleadores TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tabla_posiciones TO 'usr_admin'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador TO 'usr_admin'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador_torneo TO 'usr_admin'@'localhost';
 
 
 -- Usuario para planilleros (permisos limitados para cargar planillas, goles y tarjetas)
@@ -1148,6 +1149,7 @@ GRANT SELECT ON Obligatorio_Futbol5.tabla_fair_play TO 'usr_planillero'@'localho
 GRANT SELECT ON Obligatorio_Futbol5.tabla_goleadores TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tabla_posiciones TO 'usr_planillero'@'localhost';
 GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador TO 'usr_planillero'@'localhost';
+GRANT SELECT ON Obligatorio_Futbol5.tarjetas_jugador_torneo TO 'usr_planillero'@'localhost';
 
 
 GRANT INSERT, UPDATE ON Obligatorio_Futbol5.planilla_partido TO 'usr_planillero'@'localhost';
