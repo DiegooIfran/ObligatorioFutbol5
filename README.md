@@ -91,21 +91,21 @@ Una vez que el programa esté en funcionamiento aparecerá la pantalla de inicio
 
 ### Al ingresar como administrador se le plantean al usuario las siguientes opciones:  
 
-##### Trabajar en un torneo 
+#### Trabajar en un torneo 
 
-##### ABM de Torneos 
+#### ABM de Torneos 
 
-##### ABM de Canchas 
+#### ABM de Canchas 
 
-##### ABM de Complejos Deportivos 
+#### ABM de Complejos Deportivos 
 
-##### ABM de Facultades 
+#### ABM de Facultades 
 
-##### ABM de Jugadores 
+#### ABM de Jugadores 
 
-##### ABM de Logins (Usuarios) 
+#### ABM de Logins (Usuarios) 
 
-##### Cerrar Sesión 
+#### Cerrar Sesión 
 
  
 
