@@ -1,7 +1,7 @@
 # MANUAL DE USUARIO 
 
 
-Requisitos: 
+## Requisitos: 
 
 Tener un IDE de python descargado (como PyCharm) 
 
@@ -13,15 +13,15 @@ Descargar la librería mysql.connector con el siguiente comando:
 
 pip install mysql-connector-python 
 
-Pasos para levantar el programa: 
+## Pasos para levantar el programa: 
 
-Paso 1: 
+### Paso 1: 
 
 Clonar el repositorio de GitHub:  
 
 https://github.com/DiegooIfran/ObligatorioFutbol5  
 
-Paso 2: 
+### Paso 2: 
 
 Crear y encender un servidor local en MySQL Configurator de la siguiente manera: 
 
@@ -29,7 +29,7 @@ Abre tu herramienta de gestión de MySQL.
 
 Asegúrate de crear e iniciar un servidor local activo (por defecto suele correr en el puerto 3306 con el usuario root). 
 
-Paso 3:  
+### Paso 3:  
 
 Conectar el servidor local con el IDE de bases de datos: 
 
@@ -41,19 +41,19 @@ Rellena los datos de conexión del servidor local (Host: localhost, Port: 3306, 
 
 Prueba la conexión (Test Connection) y guárdala. 
 
-Paso 4:  
+### Paso 4:  
 
 Abrir el documento Creacion_tablas_obligatorio.sql en el IDE de SQL y correrlo por completo 
 
 Advertencia: Si ya existe una base de datos llamada Obligatorio_Futbol5 o usuarios 'usr_admin'@'localhost', 'usr_planillero'@'localhost' o 'usr_login'@'localhost' el código los dará de baja. 
 
-Paso 5:  
+### Paso 5:  
 
 En el IDE de python correr menu.py ubicado en la carpeta "backend" 
 
  
 
-Cómo utilizar el programa: 
+## Cómo utilizar el programa: 
 
 El programa ya viene con datos de ejemplo cargados y dos usuarios iniciales: 
 
@@ -69,7 +69,7 @@ En este sistema hay dos tipos de usuarios, los administradores y los planilleros
 
 Los planilleros sólo pueden registrar las planillas de los partidos, registrar los goles y tarjetas (o editar su minuto) y marcar los partidos como "jugados". Las planillas y goles deben ser registradas antes de pasadas 48 horas de la hora disputa del partido marcada en la base de datos. 
 
-Uso general del programa: 
+## Uso general del programa: 
 
 Para elegir una opción, se escribe su número y se presiona Enter. 
 
@@ -89,23 +89,23 @@ Para salir del programa, se escribe “0” en la pantalla de inicio de sesión.
 
 Una vez que el programa esté en funcionamiento aparecerá la pantalla de inicio de sesión. En el primer uso se debe de ingresar con la cuenta "admin@ucu.edu.uy" para poder crear así el usuario de administrador de quién lo vaya a usar (y es recomendado borrar este usuario inicial por temas de seguridad). 
 
-Al ingresar como administrador se le plantean al usuario las siguientes opciones:  
+### Al ingresar como administrador se le plantean al usuario las siguientes opciones:  
 
-Trabajar en un torneo 
+##### Trabajar en un torneo 
 
-ABM de Torneos 
+##### ABM de Torneos 
 
-ABM de Canchas 
+##### ABM de Canchas 
 
-ABM de Complejos Deportivos 
+##### ABM de Complejos Deportivos 
 
-ABM de Facultades 
+##### ABM de Facultades 
 
-ABM de Jugadores 
+##### ABM de Jugadores 
 
-ABM de Logins (Usuarios) 
+##### ABM de Logins (Usuarios) 
 
-Cerrar Sesión 
+##### Cerrar Sesión 
 
  
 
