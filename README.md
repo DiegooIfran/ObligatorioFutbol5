@@ -91,21 +91,21 @@ Una vez que el programa esté en funcionamiento aparecerá la pantalla de inicio
 
 ### Al ingresar como administrador se le plantean al usuario las siguientes opciones:  
 
-#### Trabajar en un torneo 
+Trabajar en un torneo 
 
-#### ABM de Torneos 
+ABM de Torneos 
 
-#### ABM de Canchas 
+ABM de Canchas 
 
-#### ABM de Complejos Deportivos 
+ABM de Complejos Deportivos 
 
-#### ABM de Facultades 
+ABM de Facultades 
 
-#### ABM de Jugadores 
+ABM de Jugadores 
 
-#### ABM de Logins (Usuarios) 
+ABM de Logins (Usuarios) 
 
-#### Cerrar Sesión 
+Cerrar Sesión 
 
  
 
@@ -143,7 +143,7 @@ Cierra sesión y devuelve a la pantalla de inicio de sesión
 
  
 
-Al elegir "Trabajar en un torneo" se le pregunta al usuario el id del torneo en el que trabajará y al ingresar un id correcto se despliega el siguiente menú: 
+### Al elegir "Trabajar en un torneo" se le pregunta al usuario el id del torneo en el que trabajará y al ingresar un id correcto se despliega el siguiente menú: 
 
  
 
@@ -235,7 +235,7 @@ Te devuelve al menú principal.
  
 
 
-Al ingresar como planillero primero se le preguntará en qué torneo decide trabajar y posteriormente se le plantean al usuario las siguientes opciones: 
+### Al ingresar como planillero primero se le preguntará en qué torneo decide trabajar y posteriormente se le plantean al usuario las siguientes opciones: 
 
 Registrar o consultar Planillas 
 
